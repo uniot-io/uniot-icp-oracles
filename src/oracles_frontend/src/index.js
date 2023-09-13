@@ -1,4 +1,4 @@
-import { hello_backend } from "../../declarations/hello_backend";
+import { oracles_backend as oracles_backend } from "../../declarations/oracles_backend";
 
 document.querySelector("form").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -9,7 +9,7 @@ document.querySelector("form").addEventListener("submit", async (e) => {
   button.setAttribute("disabled", true);
 
   // Interact with foo actor, calling the greet method
-  const greeting = await hello_backend.greet(name);
+  const greeting = await oracles_backend.greet(name);
 
   button.removeAttribute("disabled");
 

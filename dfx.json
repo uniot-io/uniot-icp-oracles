@@ -1,19 +1,19 @@
 {
   "canisters": {
-    "hello_backend": {
-      "main": "src/hello_backend/main.mo",
+    "oracles_backend": {
+      "main": "src/oracles_backend/main.mo",
       "type": "motoko"
     },
-    "hello_frontend": {
+    "oracles_frontend": {
       "dependencies": [
-        "hello_backend"
+        "oracles_backend"
       ],
       "frontend": {
-        "entrypoint": "src/hello_frontend/src/index.html"
+        "entrypoint": "src/oracles_frontend/src/index.html"
       },
       "source": [
-        "src/hello_frontend/assets",
-        "dist/hello_frontend/"
+        "src/oracles_frontend/assets",
+        "dist/oracles_frontend/"
       ],
       "type": "assets"
     }
