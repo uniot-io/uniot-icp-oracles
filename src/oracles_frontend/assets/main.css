@@ -26,12 +26,13 @@ button[type="submit"] {
     float: right;
 }
 
-#greeting {
+.output {
     margin: 10px auto;
     padding: 10px 60px;
     border: 1px solid #222;
+    text-align: center;
 }
 
-#greeting:empty {
+.output:empty {
     display: none;
 }

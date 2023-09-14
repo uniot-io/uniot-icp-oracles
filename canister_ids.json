@@ -1,0 +1,8 @@
+{
+  "oracles_backend": {
+    "ic": "demvo-fqaaa-aaaan-qecea-cai"
+  },
+  "oracles_frontend": {
+    "ic": "ddnt2-iiaaa-aaaan-qeceq-cai"
+  }
+}

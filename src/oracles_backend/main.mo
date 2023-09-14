@@ -1,5 +1,7 @@
+import Principal "mo:base/Principal";
+
 actor {
-  public query func greet(name : Text) : async Text {
-    return "Hello, " # name # "! I am Uniot - the first DIY-friendly blockchain-based IoT platform.";
+  public query (message) func greet() : async Text {
+    return "Hello, " # Principal.toText(message.caller) # "! I am Uniot - the first DIY-friendly blockchain-based IoT platform.";
   };
 };

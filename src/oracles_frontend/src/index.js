@@ -1,19 +1,50 @@
-import { oracles_backend as oracles_backend } from "../../declarations/oracles_backend";
+import {createActor, oracles_backend} from "../../declarations/oracles_backend";
+import {AuthClient} from "@dfinity/auth-client"
+import {HttpAgent} from "@dfinity/agent";
 
-document.querySelector("form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const button = e.target.querySelector("button");
+let actor = oracles_backend;
 
-  const name = document.getElementById("name").value.toString();
+const greetButton = document.getElementById("greet");
+greetButton.onclick = async (e) => {
+    e.preventDefault();
 
-  button.setAttribute("disabled", true);
+    greetButton.setAttribute("disabled", true);
 
-  // Interact with foo actor, calling the greet method
-  const greeting = await oracles_backend.greet(name);
+    // Interact with backend actor, calling the greet method
+    const greeting = await actor.greet();
 
-  button.removeAttribute("disabled");
+    greetButton.removeAttribute("disabled");
 
-  document.getElementById("greeting").innerText = greeting;
+    document.getElementById("greeting").innerText = greeting;
 
-  return false;
-});
+    return false;
+};
+
+const loginButton = document.getElementById("login");
+loginButton.onclick = async (e) => {
+    e.preventDefault();
+
+    // create an auth client
+    let authClient = await AuthClient.create();
+
+    // start the login process and wait for it to finish
+    await new Promise((resolve) => {
+        authClient.login({
+            identityProvider: process.env.II_URL,
+            onSuccess: resolve,
+            derivationOrigin: process.env.II_DERIVATION
+        });
+    });
+
+    // At this point we're authenticated, and we can get the identity from the auth client:
+    const identity = authClient.getIdentity();
+    // Using the identity obtained from the auth client, we can create an agent to interact with the IC.
+    const agent = new HttpAgent({identity});
+    document.getElementById("principal").innerText = (await agent.getPrincipal()).toString();
+    // Using the interface description of our webapp, we create an actor that we use to call the service methods.
+    actor = createActor(process.env.ORACLES_BACKEND_CANISTER_ID, {
+        agent,
+    });
+
+    return false;
+};
