@@ -39,6 +39,10 @@ const isDevelopment = process.env.NODE_ENV !== "production";
 const internetIdentityUrl = network === "local" ? `http://localhost:4943/?canisterId=${canisterEnvVariables["INTERNET_IDENTITY_CANISTER_ID"]}` : `https://identity.ic0.app`
 const iiDerivationOrigin = network === "local" ? 'https://2vxsx-fae.icp0.io' : `https://${canisterEnvVariables["ORACLES_FRONTEND_CANISTER_ID"]}.icp0.io`
 
+console.log('Use the following .env vars to integrate Internet Identity:')
+console.log(` II_URL=${internetIdentityUrl}`)
+console.log(` II_DERIVATION=${iiDerivationOrigin}\n`)
+
 const frontendDirectory = "oracles_frontend";
 
 const frontend_entry = path.join("src", frontendDirectory, "src", "index.html");
