@@ -1,7 +1,7 @@
 {
   "canisters": {
     "oracles_backend": {
-      "main": "src/oracles_backend/main.mo",
+      "main": "src/canister/counter/main.mo",
       "type": "motoko"
     },
     "oracles_frontend": {
@@ -10,11 +10,10 @@
         "internet_identity"
       ],
       "frontend": {
-        "entrypoint": "src/oracles_frontend/src/index.html"
+        "entrypoint": "dist/index.html"
       },
       "source": [
-        "src/oracles_frontend/assets",
-        "dist/oracles_frontend/"
+        "dist/"
       ],
       "type": "assets"
     },
@@ -36,6 +35,5 @@
       "packtool": ""
     }
   },
-  "output_env_file": ".env",
   "version": 1
 }

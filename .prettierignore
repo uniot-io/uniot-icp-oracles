@@ -1,0 +1,5 @@
+src/declarations/
+node_modules/
+*.d.ts
+.dfx/
+dist/
