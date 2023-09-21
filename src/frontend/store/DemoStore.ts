@@ -7,13 +7,13 @@ export const useMyDemoStore = defineStore('myDemoStore', {
     }
   },
   getters: {
-    doubleCount: state => state.counter1234 + 100
+    doubleCount: (state) => state.counter1234 + 100
   },
   actions: {
-    increment () {
+    increment() {
       this.increment2()
     },
-    increment2 () {
+    increment2() {
       this.$state.counter1234++
     }
   }

@@ -1,5 +1,6 @@
 # Uniot ICP Playground
-![uniot_logo](src/hello_frontend/assets/uniot_logo.svg)
+
+![uniot_logo](src/frontend/assets/logo.svg)
 
 ## Getting Started
 

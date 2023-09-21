@@ -5,8 +5,8 @@ import { resolve } from 'path'
 
 const DFX_NETWORK = process.env.DFX_NETWORK || 'local'
 
-function initEnv () {
-  let localCanisters, prodCanisters, canisters
+function initEnv() {
+  let localCanisters, prodCanisters
 
   try {
     localCanisters = require(path.resolve('.dfx', 'local', 'canister_ids.json'))
@@ -20,7 +20,7 @@ function initEnv () {
     console.log('No production canister_ids.json found.')
   }
 
-  canisters = DFX_NETWORK === 'local' ? localCanisters : prodCanisters
+  const canisters = DFX_NETWORK === 'local' ? localCanisters : prodCanisters
 
   for (const canister in canisters) {
     process.env['VITE_APP_' + canister.toUpperCase() + '_CANISTER_ID'] = canisters[canister][DFX_NETWORK]
@@ -31,7 +31,9 @@ function initEnv () {
       ? `http://localhost:4943/?canisterId=${canisters['internet_identity'][DFX_NETWORK]}`
       : `https://identity.ic0.app`
   process.env['VITE_APP_II_DERIVATION'] =
-    DFX_NETWORK === 'local' ? 'https://2vxsx-fae.icp0.io' : `https://${canisters['oracles_frontend'][DFX_NETWORK]}.icp0.io`
+    DFX_NETWORK === 'local'
+      ? 'https://2vxsx-fae.icp0.io'
+      : `https://${canisters['oracles_frontend'][DFX_NETWORK]}.icp0.io`
 
   console.log('Use the following .env vars to integrate Internet Identity:')
   console.log(` II_URL=${process.env['VITE_APP_II_URL']}`)
@@ -70,7 +72,7 @@ export default defineConfig({
       '/api': {
         target: 'http://127.0.0.1:4943',
         changeOrigin: true,
-        rewrite: path => path.replace(/^\/api/, '/api')
+        rewrite: (path) => path.replace(/^\/api/, '/api')
       }
     }
   }

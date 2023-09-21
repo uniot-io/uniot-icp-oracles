@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Index from '@/views/Index.vue'
-import About from '@/views/About.vue'
-import Example from '@/views/Example.vue'
+import Index from '@/views/IndexView.vue'
+import About from '@/views/AboutView.vue'
+import Example from '@/views/ExampleView.vue'
 
 // NOTE: Avoid using dynamic imports (e.g., `component: async () => await import('@/views/Example.vue')`) in this application.
 // The local development setup with the Internet Computer canister expects either a `canisterId` parameter in request URLs

@@ -1,5 +1,5 @@
 <template>
-  <HelloWorld msg="TEST"/>
+  <HelloWorld msg="TEST" />
 </template>
 
 <style lang="scss" scoped></style>
