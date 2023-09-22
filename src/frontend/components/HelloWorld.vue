@@ -53,7 +53,7 @@ export default defineComponent({
       const authClient = await AuthClient.create()
 
       // start the login process and wait for it to finish
-      await new Promise(resolve => {
+      await new Promise((resolve) => {
         authClient.login({
           identityProvider: import.meta.env.VITE_APP_II_URL,
           onSuccess: () => {
@@ -82,10 +82,8 @@ export default defineComponent({
 </script>
 
 <style scoped>
-
 .demo-button {
   margin: 5px;
-  font-size: calc(10px + 2vmin);
   background: linear-gradient(237.86deg, #532885 -20%, #ee1f7a 124%);
   padding: 0 2em;
   border-radius: 60px;

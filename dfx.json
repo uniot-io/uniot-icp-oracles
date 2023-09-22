@@ -5,16 +5,11 @@
       "type": "motoko"
     },
     "oracles_frontend": {
-      "dependencies": [
-        "oracles_backend",
-        "internet_identity"
-      ],
+      "dependencies": ["oracles_backend", "internet_identity"],
       "frontend": {
         "entrypoint": "dist/index.html"
       },
-      "source": [
-        "dist/"
-      ],
+      "source": ["dist/"],
       "type": "assets"
     },
     "internet_identity": {

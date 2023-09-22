@@ -29,6 +29,7 @@
     "vue-router": "^4.0.11"
   },
   "devDependencies": {
+    "@rushstack/eslint-patch": "^1.4.0",
     "@types/buffers": "^0.1.31",
     "@types/node": "^16.7.10",
     "@typescript-eslint/eslint-plugin": "^6.7.0",
