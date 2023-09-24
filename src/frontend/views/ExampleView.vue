@@ -5,7 +5,7 @@
 
 <style lang="scss" scoped>
 div {
-  background-color: $base-color;
+  background-color: var(--el-color-primary);
 }
 </style>
 
