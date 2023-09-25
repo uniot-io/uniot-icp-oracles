@@ -14,11 +14,11 @@
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import logo from '@/assets/logo.svg'
-import { useICPAuthStore } from '@/store/ICPAuth'
+import { useIcpAuthStore } from '@/store/IcpAuth'
 
 const route = useRoute()
 const router = useRouter()
-const icpAuth = useICPAuthStore()
+const icpAuth = useIcpAuthStore()
 const error = ref(false)
 const errorMessage = ref('')
 

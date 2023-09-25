@@ -8,8 +8,6 @@
   </el-scrollbar>
 </template>
 
-<style scoped></style>
-
 <script setup lang="ts">
 import { ref } from 'vue'
 
