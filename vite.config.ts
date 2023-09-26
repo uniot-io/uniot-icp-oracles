@@ -1,7 +1,6 @@
+import path from 'path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import path from 'path'
-import { resolve } from 'path'
 
 const DFX_NETWORK = process.env.DFX_NETWORK || 'local'
 
@@ -52,15 +51,14 @@ export default defineConfig({
       scss: {
         // example : additionalData: `@import "./src/design/styles/variables";`
         // dont need include file extend .scss
-        additionalData: `@import "./src/frontend/assets/scss/variable";
-                         @import "./src/frontend/assets/scss/global";`
+        // additionalData: `@import "@/assets/scss/index";`
       }
     }
   },
   base: './',
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src/frontend')
+      '@': path.resolve(__dirname, './src/frontend')
     }
   },
   plugins: [vue()],
