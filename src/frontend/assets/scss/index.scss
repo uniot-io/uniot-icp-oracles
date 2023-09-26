@@ -1,6 +1,8 @@
-@import "uniot/fonts";
-@import "uniot/variable";
-@import "uniot/utility";
+@use "@/assets/scss/uniot/theme" as *;
+@use "element-plus/theme-chalk/src/index" as *;
+@use "uniot/fonts";
+@use "uniot/var";
+@use "uniot/utility";
 
 body {
   margin: 0;

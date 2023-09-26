@@ -1,6 +1,7 @@
 import path from 'path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import ElementPlus from 'unplugin-element-plus/vite'
 
 const DFX_NETWORK = process.env.DFX_NETWORK || 'local'
 
@@ -49,9 +50,10 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
-        // example : additionalData: `@import "./src/design/styles/variables";`
-        // dont need include file extend .scss
-        // additionalData: `@import "@/assets/scss/index";`
+        // IMPORTANT: Do not link .scss files directly in the Vite config.
+        // This will prepend the content to EVERY .scss file, leading to significant duplication
+        // in the compiled output and a larger build size. Instead, use explicit @use or @import
+        // in individual .scss files as needed.
       }
     }
   },
@@ -61,7 +63,13 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src/frontend')
     }
   },
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    // For future refactoring to use components on demand.
+    ElementPlus({
+      useSource: true
+    })
+  ],
   define: {
     'process.env': process.env
   },
