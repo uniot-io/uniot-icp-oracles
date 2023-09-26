@@ -10,23 +10,27 @@
         active-text-color="#09090c"
       >
         <el-scrollbar>
-          <el-menu-item class="un-menu-item" index="/">
+          <el-menu-item class="un-menu-item" index="/generic-oracle">
             <el-icon class="un-menu-icon"><document /></el-icon>
             <span class="un-menu-label">Generic IoT Oracle</span>
           </el-menu-item>
-          <el-menu-item class="un-menu-item" index="/about">
+          <el-menu-item class="un-menu-item" index="/uniot-oracle">
             <el-icon class="un-menu-icon"><memo /></el-icon>
             <span class="un-menu-label">Uniot Device Oracle</span>
           </el-menu-item>
-          <el-menu-item class="un-menu-item" index="/example">
+          <el-menu-item class="un-menu-item" index="/other-oracle">
             <el-icon class="un-menu-icon"><more /></el-icon>
             <span class="un-menu-label">Other IoT Oracle</span>
           </el-menu-item>
         </el-scrollbar>
       </el-menu>
       <el-row class="un-account">
-        <el-text size="large">Principal ID</el-text>
-        <el-col> {{ icpAuth.principal }} </el-col>
+        <el-col>
+          <el-text size="large">Principal ID:&nbsp;</el-text>
+          <el-tooltip :content="icpAuth.principal" placement="top">
+            {{ trimmedPrincipal() }}
+          </el-tooltip>
+        </el-col>
         <el-col>
           <el-button class="full-width" @click="icpAuth.logout()">Logout</el-button>
         </el-col>
@@ -44,10 +48,15 @@
 import logo from '@/assets/logo.svg'
 import { useRoute } from 'vue-router'
 import { Document, Memo, More } from '@element-plus/icons-vue'
-import { useICPAuthStore } from '@/store/ICPAuth'
+import { useIcpAuthStore } from '@/store/IcpAuth'
 
 const route = useRoute()
-const icpAuth = useICPAuthStore()
+const icpAuth = useIcpAuthStore()
+
+function trimmedPrincipal() {
+  const principalID = icpAuth.principal.split('-')
+  return `${principalID[0]}-${principalID[1]}...${principalID[principalID.length - 1]}`
+}
 </script>
 
 <style lang="scss" scoped>

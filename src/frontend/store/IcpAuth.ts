@@ -4,8 +4,9 @@ import { AuthClient } from '@dfinity/auth-client'
 import { HttpAgent, Identity } from '@dfinity/agent'
 import router from '@/router'
 
-export const useICPAuthStore = defineStore('icpAuthStore', () => {
+export const useIcpAuthStore = defineStore('icpAuthStore', () => {
   const authenticated = ref(false)
+  let authClient: AuthClient | undefined = undefined // can't be stored in ref...
   const identity = ref<Identity>()
   const agent = ref<HttpAgent>()
   const principal = ref('')
@@ -13,11 +14,10 @@ export const useICPAuthStore = defineStore('icpAuthStore', () => {
 
   async function login() {
     // create an auth client
-    const authClient = await AuthClient.create()
-
+    authClient = await AuthClient.create()
     // start the login process and wait for it to finish
     authenticated.value = await new Promise((resolve, reject) => {
-      authClient.login({
+      authClient?.login({
         identityProvider: import.meta.env.VITE_APP_II_URL,
         onSuccess: () => {
           resolve(true)
@@ -37,11 +37,18 @@ export const useICPAuthStore = defineStore('icpAuthStore', () => {
   }
 
   async function logout() {
-    identity.value = undefined
-    agent.value = undefined
-    principal.value = ''
-    authenticated.value = false
-    await router.push('login')
+    try {
+      await authClient?.logout()
+    } catch (error) {
+      console.error(error)
+    } finally {
+      authClient = undefined
+      identity.value = undefined
+      agent.value = undefined
+      principal.value = ''
+      authenticated.value = false
+      await router.push('login')
+    }
   }
 
   return { isAuthenticated, login, logout, principal }

@@ -34,18 +34,18 @@
         <el-scrollbar>
           <el-menu
             :router="true"
-            default-active="/"
+            default-active="/legacy"
             active-text-color="#ffd04b"
             background-color="#545c64"
             text-color="#fff"
           >
-            <el-menu-item index="/">
+            <el-menu-item index="/legacy">
               <span>First Oracle</span>
             </el-menu-item>
-            <el-menu-item index="about">
+            <el-menu-item index="/legacy/about">
               <span>Second Oracle</span>
             </el-menu-item>
-            <el-menu-item index="example">
+            <el-menu-item index="/legacy/example">
               <span>Third Oracle</span>
             </el-menu-item>
           </el-menu>

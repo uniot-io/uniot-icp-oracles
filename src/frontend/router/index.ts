@@ -1,12 +1,16 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
-import MainLayout from '@/layouts/MainLayout.vue'
-import IndexView from '@/views/IndexView.vue'
-import AboutView from '@/views/AboutView.vue'
-import ExampleView from '@/views/ExampleView.vue'
-import NotFoundView from '@/views/NotFoundView.vue'
-import LegacyLayout from '@/layouts/LegacyLayout.vue'
-import { useICPAuthStore } from '@/store/ICPAuth'
+import { useIcpAuthStore } from '@/store/IcpAuth'
 import LoginView from '@/views/LoginView.vue'
+import MainLayout from '@/layouts/MainLayout.vue'
+import GenericOracleView from '@/views/oracle/GenericOracleView.vue'
+import NotFoundView from '@/views/NotFoundView.vue'
+import EmptyView from '@/views/EmptyView.vue'
+
+// legacy views
+import LegacyLayout from '@/layouts/LegacyLayout.vue'
+import LegacyIndexView from '@/views/legacy/LegacyIndexView.vue'
+import LegacyAboutView from '@/views/legacy/LegacyAboutView.vue'
+import LegacyExampleView from '@/views/legacy/LegacyExampleView.vue'
 
 // NOTE: Avoid using dynamic imports (e.g., `component: async () => await import('@/views/Example.vue')`) in this application.
 // The local development setup with the Internet Computer canister expects either a `canisterId` parameter in request URLs
@@ -15,13 +19,14 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     component: MainLayout,
+    redirect: 'generic-oracle',
     children: [
-      { path: '', component: IndexView },
-      { path: 'about', component: AboutView },
-      { path: 'example', component: ExampleView }
+      { path: 'generic-oracle', component: GenericOracleView },
+      { path: 'uniot-oracle', component: EmptyView },
+      { path: 'other-oracle', component: EmptyView }
     ],
     beforeEnter: () => {
-      const icpAuth = useICPAuthStore()
+      const icpAuth = useIcpAuthStore()
       if (!icpAuth.isAuthenticated) {
         return 'login'
       }
@@ -33,10 +38,16 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/legacy',
-    component: LegacyLayout
+    component: LegacyLayout,
+    children: [
+      { path: '', component: LegacyIndexView },
+      { path: 'about', component: LegacyAboutView },
+      { path: 'example', component: LegacyExampleView }
+    ]
   },
   {
     path: '/:catchAll(.*)*',
+    // redirect: '/', // TODO: maybe permanently redirect to index?
     component: NotFoundView
   }
 ]
@@ -45,9 +56,5 @@ const router = createRouter({
   history: createWebHistory(),
   routes: routes
 })
-
-// router.beforeEach((to, from, next) => {
-// 	next()
-// })
 
 export default router
