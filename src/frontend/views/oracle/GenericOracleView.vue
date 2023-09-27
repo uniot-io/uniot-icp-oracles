@@ -1,25 +1,27 @@
 <template>
-  <el-scrollbar v-loading="loading">
-    <el-table :data="topicsData">
-      <el-table-column prop="date" label="Date" width="140" />
-      <el-table-column prop="topic" label="Topic" width="350" />
-      <el-table-column prop="message" label="Message" />
-    </el-table>
-  </el-scrollbar>
+  <el-container class="full-height">
+    <oracle-menu :oracles="oracles" />
+    <oracle-table-data :loading="loading" :data="topicsData" />
+  </el-container>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
+import { ElLoading } from 'element-plus'
 import { useMqttStore } from '@/store/MqttStore'
+import OracleMenu from '@/components/oracle/OracleMenu.vue'
+import OracleTableData from '@/components/oracle/OracleDataTable.vue'
 
 const mqttStore = useMqttStore()
-const loading = ref(true)
-const topicsData = ref([])
+const loading = ref(false)
+const oracles = ref<string[]>(['first', 'second', 'third'])
+const topicsData = reactive<string[]>([])
 
 onMounted(async () => {
+  const loadingInstance = ElLoading.service({ fullscreen: true, text: 'Loading data...' })
   await mqttStore.connect()
-  loading.value = false
+  loadingInstance.close()
 })
 
 onBeforeRouteLeave(async () => {

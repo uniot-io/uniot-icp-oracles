@@ -21,7 +21,8 @@ const routes: RouteRecordRaw[] = [
     component: MainLayout,
     redirect: 'generic-oracle',
     children: [
-      { path: 'generic-oracle', component: GenericOracleView },
+      { path: 'generic-oracle/create', component: NotFoundView },
+      { path: 'generic-oracle/:oracle?', component: GenericOracleView },
       { path: 'uniot-oracle', component: EmptyView },
       { path: 'other-oracle', component: EmptyView }
     ],

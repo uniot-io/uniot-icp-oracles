@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, watchEffect } from 'vue'
 import { AuthClient } from '@dfinity/auth-client'
 import { HttpAgent, Identity } from '@dfinity/agent'
 import router from '@/router'
@@ -10,32 +10,25 @@ export const useIcpAuthStore = defineStore('icpAuthStore', () => {
   const authenticated = ref(false)
   const identity = ref<Identity>()
   const agent = ref<HttpAgent>()
-  const principal = ref('')
+  const principal = computed(() => identity.value?.getPrincipal().toString())
   const isAuthenticated = computed(() => authenticated.value)
 
   watch(authenticated, async (success) => {
     if (success) {
       identity.value = authClient?.getIdentity()
-      principal.value = (await identity.value!.getPrincipal()).toString()
       agent.value = new HttpAgent({ identity: identity.value })
     }
   })
 
-  async function init(): Promise<void> {
-    if (authClient === undefined) {
-      authClient = await AuthClient.create({
-        keyType: 'Ed25519',
-        idleOptions: {
-          // call logout & reload window if idle for <idleTimeout> milliseconds
-          idleTimeout: 60 * 10 * 1000 // 10 minutes
-        }
-      })
-    }
-    authenticated.value = await authClient.isAuthenticated()
-  }
+  watchEffect(async () => {
+    await _init().catch((error) => {
+      console.error(error)
+      throw error
+    })
+  })
 
   async function login(): Promise<void> {
-    await init()
+    await _init()
     if (authenticated.value) {
       return
     }
@@ -66,19 +59,31 @@ export const useIcpAuthStore = defineStore('icpAuthStore', () => {
     } catch (error) {
       console.error(error)
     } finally {
-      authClient = undefined
-      identity.value = undefined
-      agent.value = undefined
-      principal.value = ''
-      authenticated.value = false
-      await router.push('login')
+      await _cleanup()
     }
   }
 
-  init().catch((error) => {
-    console.error(error)
-    throw error
-  })
+  async function _init(): Promise<void> {
+    if (authClient === undefined) {
+      authClient = await AuthClient.create({
+        keyType: 'Ed25519',
+        idleOptions: {
+          // call logout & reload window if idle for <idleTimeout> milliseconds
+          idleTimeout: 10 * 60 * 1000, // 10 minutes
+          onIdle: _cleanup
+        }
+      })
+    }
+    authenticated.value = await authClient.isAuthenticated()
+  }
 
-  return { isAuthenticated, login, logout, principal }
+  async function _cleanup() {
+    authClient = undefined
+    identity.value = undefined
+    agent.value = undefined
+    authenticated.value = false
+    await router.push('login')
+  }
+
+  return { isAuthenticated, principal, login, logout }
 })

@@ -36,11 +36,9 @@
         </el-col>
       </el-row>
     </el-aside>
-    <el-container>
-      <el-main>
-        <router-view />
-      </el-main>
-    </el-container>
+    <el-main>
+      <router-view />
+    </el-main>
   </el-container>
 </template>
 
@@ -54,8 +52,11 @@ const route = useRoute()
 const icpAuth = useIcpAuthStore()
 
 function trimmedPrincipal() {
-  const principalID = icpAuth.principal.split('-')
-  return `${principalID[0]}-${principalID[1]}...${principalID[principalID.length - 1]}`
+  if (icpAuth.isAuthenticated) {
+    const principal = icpAuth.principal!.split('-')
+    return `${principal[0]}-${principal[1]}...${principal[principal.length - 1]}`
+  }
+  return ''
 }
 </script>
 
