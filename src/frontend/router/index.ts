@@ -1,8 +1,8 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import { useIcpAuthStore } from '@/store/IcpAuth'
-import LoginView from '@/views/LoginView.vue'
 import MainLayout from '@/layouts/MainLayout.vue'
-import GenericOracleView from '@/views/oracle/GenericOracleView.vue'
+import GenericOracleLayout from '@/layouts/oracles/GenericOracleLayout.vue'
+import LoginView from '@/views/LoginView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import EmptyView from '@/views/EmptyView.vue'
 
@@ -21,8 +21,7 @@ const routes: RouteRecordRaw[] = [
     component: MainLayout,
     redirect: 'generic-oracle',
     children: [
-      { path: 'generic-oracle/create', component: NotFoundView },
-      { path: 'generic-oracle/:oracle?', component: GenericOracleView },
+      { path: 'generic-oracle', component: GenericOracleLayout },
       { path: 'uniot-oracle', component: EmptyView },
       { path: 'other-oracle', component: EmptyView }
     ],
