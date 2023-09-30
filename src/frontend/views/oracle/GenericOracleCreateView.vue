@@ -1,11 +1,7 @@
 <template>
   <el-card class="full-width" shadow="never" style="border: none; max-width: 800px">
     <el-form ref="formRef" :model="form" label-position="top" v-loading="false">
-      <el-form-item
-        label="Oracle name"
-        :prop="form.name"
-        :rules="[{ required: true, message: 'Oracle name can not be empty', trigger: 'blur' }]"
-      >
+      <el-form-item label="Oracle name" :prop="'name'" :rules="rules.name">
         <el-input v-model="form.name" />
       </el-form-item>
       <el-form-item
@@ -13,15 +9,10 @@
         :key="index"
         :label="`Topic #${index + 1}`"
         :prop="`topics.${index}.name`"
-        required
+        :rules="rules.topics"
       >
         <el-col :span="16">
-          <el-form-item
-            :rules="[
-              { pattern: /^[^#+]+$/, message: 'Topic name can not be wildcard', trigger: 'blur' },
-              { required: true, message: 'Topic name can not be empty', trigger: 'blur' }
-            ]"
-          >
+          <el-form-item>
             <el-input class="full-width" v-model="topic.name" />
           </el-form-item>
         </el-col>
@@ -72,7 +63,7 @@ const rules = reactive<FormRules<RuleForm>>({
   name: [{ required: true, message: 'Oracle name can not be empty', trigger: 'blur' }],
   topics: [
     { required: true, message: 'Topic name can not be empty', trigger: 'blur' },
-    { pattern: /[+#]/, message: 'Topic name can not be wildcard', trigger: 'blur' }
+    { pattern: /^[^#+]+$/, message: 'Topic name can not be wildcard', trigger: 'blur' }
   ]
 })
 
