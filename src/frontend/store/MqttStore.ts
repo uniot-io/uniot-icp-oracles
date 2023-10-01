@@ -2,8 +2,9 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import * as mqtt from 'mqtt/dist/mqtt.min'
 import { IPublishPacket } from 'mqtt-packet'
+import { Buffer } from 'buffer'
 
-export type MqttMessageCallback = (topic: string, data: Uint8Array) => void
+export type MqttMessageCallback = (topic: string, data: Buffer, packet?: IPublishPacket) => void
 
 export const useMqttStore = defineStore('mqttStore', () => {
   const client = ref<mqtt.MqttClient | undefined>()
@@ -49,6 +50,11 @@ export const useMqttStore = defineStore('mqttStore', () => {
     }
   }
 
+  async function publish(topic: string, message: string | Buffer, opts?: mqtt.IClientPublishOptions) {
+    await connect()
+    await client.value?.publishAsync(topic, message, opts)
+  }
+
   async function subscribe(topic: string, callback: MqttMessageCallback) {
     await connect()
     if (topic.search(/[+#]/) !== -1) {
@@ -81,19 +87,17 @@ export const useMqttStore = defineStore('mqttStore', () => {
     })
   }
 
-  function _onMessage(topic: string, message: Uint8Array, packet: IPublishPacket) {
-    if (packet.retain) {
-      const callback = subscriptions.get(topic)
-      if (!callback) {
-        return
-      }
-      callback(topic, message)
+  function _onMessage(topic: string, message: Buffer, packet: IPublishPacket) {
+    const callback = subscriptions.get(topic)
+    if (!callback) {
+      return
     }
+    callback(topic, message, packet)
   }
 
   function _onError(error: Error) {
     console.error(`MQTT: ${error}`)
   }
 
-  return { subscribe, unsubscribe }
+  return { subscribe, unsubscribe, publish }
 })

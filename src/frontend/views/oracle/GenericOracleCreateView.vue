@@ -18,9 +18,9 @@
         </el-col>
         <el-col :span="4">
           <el-form-item required>
-            <el-select class="full-width" v-model="topic.messageType" default-first-option>
+            <el-select class="full-width" v-model="topic.settings.messageType" default-first-option>
               <el-option
-                v-for="messageType in DefaultMessageTypes"
+                v-for="messageType in MqttMessageTypes"
                 :key="messageType"
                 :label="messageType"
                 :value="messageType"
@@ -44,21 +44,20 @@
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
-import { OracleTopicParams } from '@/types/oracle'
 import { FormRules, FormInstance } from 'element-plus'
+import { OracleSettings, OracleTopics } from '@/types/oracle'
+import { MqttMessageTypes } from '@/types/mqtt'
 
-const DefaultMessageTypes = ['JSON', 'CBOR', 'Base64', 'Hex', 'PlainText']
-
-type CreateOracleForm = {
-  name: string
-  topics: OracleTopicParams[]
+type GenericOracleCreateViewEmits = {
+  (e: 'submit', oracles: OracleSettings): Promise<void>
 }
+
 interface RuleForm {
   name: string
-  topics: OracleTopicParams[]
+  topics: OracleTopics[]
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const emit = defineEmits<GenericOracleCreateViewEmits>()
 const rules = reactive<FormRules<RuleForm>>({
   name: [{ required: true, message: 'Oracle name can not be empty', trigger: 'blur' }],
   topics: [
@@ -67,28 +66,24 @@ const rules = reactive<FormRules<RuleForm>>({
   ]
 })
 
-const form = reactive<CreateOracleForm>({
+const form = reactive<OracleSettings>({
   name: '',
-  topics: [{ name: '', messageType: DefaultMessageTypes[0] }]
+  topics: [{ name: '', settings: { messageType: MqttMessageTypes[0] } }]
 })
 const formRef = ref<FormInstance>()
 
 function addTopic() {
-  form.topics.push({ name: '', messageType: DefaultMessageTypes[0] })
+  form.topics.push({ name: '', settings: { messageType: MqttMessageTypes[0] } })
 }
 
 function removeTopic(index: number) {
   form.topics.splice(index, 1)
 }
 
-function submit(formEl: FormInstance | undefined) {
+async function submit(formEl: FormInstance | undefined) {
   formEl?.clearValidate()
-  formEl?.validate((valid, fields) => {
-    if (valid) {
-      console.log('submit!')
-    } else {
-      console.log('error submit!', fields)
-    }
-  })
+  if (formEl?.validate()) {
+    await emit('submit', form)
+  }
 }
 </script>

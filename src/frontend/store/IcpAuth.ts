@@ -10,7 +10,7 @@ export const useIcpAuthStore = defineStore('icpAuthStore', () => {
   const authenticated = ref(false)
   const identity = ref<Identity>()
   const agent = ref<HttpAgent>()
-  const principal = computed(() => identity.value?.getPrincipal().toString())
+  const principal = computed(() => identity.value?.getPrincipal().toString() || '')
   const isAuthenticated = computed(() => authenticated.value)
 
   watch(authenticated, async (success) => {

@@ -1,12 +1,15 @@
-import { MqttMessageTypes } from '@/types/mqtt'
+import { MqttMessageType } from '@/types/mqtt'
 
-export type OracleTopicParams = {
-  name: string
-  messageType: MqttMessageTypes | string
-}
-export type OracleParams = {
-  name: string
-  topics: OracleTopicParams[]
+export type OracleTopicSettings = {
+  messageType: MqttMessageType
 }
 
-export type TopicMessage = string
+export type OracleTopics = {
+  name: string
+  settings: OracleTopicSettings
+}
+
+export type OracleSettings = {
+  name: string
+  topics: OracleTopics[]
+}

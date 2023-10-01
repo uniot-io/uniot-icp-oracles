@@ -5,9 +5,9 @@
         <el-icon><plus /></el-icon>
         <template #title>Create Oracle</template>
       </el-menu-item>
-      <el-menu-item v-for="oracle in props.oracles" :key="oracle.name" :index="oracle.name">
+      <el-menu-item v-for="oracle in props.oracles" :key="oracle" :index="oracle">
         <el-icon><connection /></el-icon>
-        <template #title>{{ oracle.name }}</template>
+        <template #title>{{ oracle }}</template>
       </el-menu-item>
     </el-scrollbar>
   </el-menu>
@@ -15,11 +15,10 @@
 
 <script setup lang="ts">
 import { Plus, Connection } from '@element-plus/icons-vue'
-import { OracleParams } from '@/types/oracle'
 
 type OracleMenuProps = {
   defaultSelected: string
-  oracles: OracleParams[]
+  oracles: string[]
 }
 
 type OracleMenuEmits = {

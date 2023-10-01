@@ -1,31 +1,34 @@
 <template>
   <el-container class="full-height">
-    <oracle-table-data :loading="loading" :columns="[]" :data="topicsData" />
+    <oracle-table-data :loading="props.loading" element-loading-text="Subscribing..." :columns="columns" :data="[]" />
   </el-container>
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
-import { ElLoading } from 'element-plus'
-import { useMqttStore } from '@/store/MqttStore'
-import OracleTableData from '@/components/oracle/OracleDataTable.vue'
+import { ref } from 'vue'
+import { Buffer } from 'buffer'
+import { MqttMessageSecurity, MqttMessageStatus, MqttMessageType } from '@/types/mqtt'
+import OracleTableData, { TableColumn } from '@/components/oracle/OracleDataTable.vue'
 
-const mqttClient = useMqttStore()
-const loading = ref(false)
-const topicsData = reactive<string[]>([])
+export type GenericTopicData = {
+  date: string
+  message: Buffer
+  messageType: MqttMessageType
+  status: MqttMessageStatus
+  security: MqttMessageSecurity
+}
 
-let counter = 0
+type GenericOracleTopicsViewProps = {
+  loading: boolean
+  data: Map<string, GenericTopicData>
+}
 
-onMounted(async () => {
-  const loadingInstance = ElLoading.service({ fullscreen: true, text: 'Subscribing topics...' })
-  await mqttClient.subscribe('test/event/alarm', (topic: string, message: Uint8Array) => {
-    const id = counter++
-    console.log(`[${id}]${topic}: ${message}`)
-  })
-  loadingInstance.close()
-})
-
-onBeforeUnmount(async () => {
-  await mqttClient.unsubscribe('test/event/alarm')
-})
+const props = defineProps<GenericOracleTopicsViewProps>()
+const columns = ref<TableColumn[]>([
+  { label: 'Date', prop: 'date', width: 100 },
+  { label: 'Topic', prop: 'topic', width: 250 },
+  { label: 'Message', prop: 'message', width: 500 },
+  { label: 'Status', prop: 'status', width: 100 },
+  { label: 'Security', prop: 'security', width: 100 }
+])
 </script>
