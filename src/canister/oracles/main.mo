@@ -103,7 +103,7 @@ actor {
     return newOracle.id
   };
 
-  public shared (msg) func subscribe(oracleId : Nat, subs : [{ topic : Text; messageType : Text }]) {
+  public shared (msg) func subscribe(oracleId : Nat, subs : [{ topic : Text; msgType : Text }]) {
     let existingOracle = switch (oracles.get(oracleId)) {
       case (null) return assert false;
       case (?oracle) oracle
@@ -114,7 +114,7 @@ actor {
 
     for (newSub in subs.vals()) {
       assert newSub.topic != "";
-      assert newSub.messageType != "";
+      assert newSub.msgType != "";
       assert switch (existingOracle.subscriptions.get(newSub.topic)) {
         case null true;
         case _ false
@@ -129,7 +129,7 @@ actor {
         case (?existingSubscription) existingSubscription
       };
 
-      existingOracle.subscribe(subscription, newSub.messageType)
+      existingOracle.subscribe(subscription, newSub.msgType)
     }
   };
 
