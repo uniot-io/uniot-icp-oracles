@@ -30,18 +30,18 @@ export default defineComponent({
       // create an auth client
       const authClient = await AuthClient.create()
 
-      if (!authClient.isAuthenticated()) {
-        // start the login process and wait for it to finish
-        await new Promise((resolve) => {
-          authClient.login({
-            identityProvider: import.meta.env.VITE_APP_II_URL,
-            onSuccess: () => {
-              resolve(true)
-            },
-            derivationOrigin: import.meta.env.VITE_APP_II_DERIVATION
-          })
+      // if (!authClient.isAuthenticated()) {
+      // start the login process and wait for it to finish
+      await new Promise((resolve) => {
+        authClient.login({
+          identityProvider: import.meta.env.VITE_APP_II_URL,
+          onSuccess: () => {
+            resolve(true)
+          },
+          derivationOrigin: import.meta.env.VITE_APP_II_DERIVATION
         })
-      }
+      })
+      // }
 
       // At this point we're authenticated, and we can get the identity from the auth client:
       const identity = authClient.getIdentity()
@@ -53,7 +53,7 @@ export default defineComponent({
         agent
       })
 
-      const oracleId = await actor.createOracle()
+      const oracleId = await actor.createOracle('test', 'generic')
       console.log('oracleId:', oracleId)
 
       await actor.subscribe(oracleId, [
@@ -73,6 +73,9 @@ export default defineComponent({
 
       const user = await actor.getUser(identity.getPrincipal())
       console.log('user:', user)
+
+      const myUser = await actor.getMyUser()
+      console.log('myUser:', myUser)
 
       for (const id of user[0].oracles) {
         const oracle = await actor.getOracle(id)

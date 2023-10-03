@@ -6,38 +6,45 @@ import Text "mo:base/Text";
 import Nat "mo:base/Nat";
 import Array "mo:base/Array";
 import Hash "mo:base/Hash";
+import Time "mo:base/Time";
+import Int "mo:base/Int";
 import TrieSetUtil "TrieSetUtil";
 
 actor {
   type SubscriptionDto = {
     topic : Text;
     message : Blob;
+    timestamp : Int;
     refCount : Nat
   };
 
   type OracleDto = {
     id : Nat;
     owner : Principal;
+    name : Text;
+    template : Text;
     subscriptions : [(Text, Text)]
   };
 
   type UserDto = {
     principal : Principal;
-    oraclesCount : Nat;
     oracles : [Nat]
   };
 
   class Subscription(_topic : Text) {
     public let topic = _topic;
     public var message = Blob.fromArray([]);
+    public var timestamp : Int = 0;
     public var refCount : Nat = 0;
 
-    public func getDto() : SubscriptionDto { { topic; message; refCount } }
+    public func getDto() : SubscriptionDto { { topic; message; timestamp; refCount } }
   };
 
-  class Oracle(_id : Nat, _owner : Principal) {
+  class Oracle(_id : Nat, _owner : Principal, _name : Text, _template : Text) {
     public let id = _id;
     public let owner = _owner;
+    public let name = _name;
+    public let template = _template;
     public let subscriptions = TrieMap.TrieMap<Text, Text>(Text.equal, Text.hash);
 
     public func getDto() : OracleDto {
@@ -47,7 +54,7 @@ actor {
         subscriptionsArray[i] := (key, value);
         i += 1
       };
-      { id = id; owner = owner; subscriptions = Array.freeze<(Text, Text)>(subscriptionsArray) }
+      { id; owner; name; template; subscriptions = Array.freeze<(Text, Text)>(subscriptionsArray) }
     };
 
     public func subscribe(subscription : Subscription, messageType : Text) {
@@ -59,16 +66,14 @@ actor {
   class User(_principal : Principal) {
     public let principal = _principal;
     public var oracles = TrieSetUtil.Set<Nat>(Nat.equal, Hash.hash);
-    public var oraclesCount = 0;
 
     public func getDto() : UserDto {
       let oraclesArray = oracles.toArray();
-      { principal; oraclesCount; oracles = oraclesArray }
+      { principal; oracles = oraclesArray }
     };
 
     public func putOracle(oracle : Oracle) {
-      oracles.put(oracle.id);
-      oraclesCount += 1
+      oracles.put(oracle.id)
     }
   };
 
@@ -83,8 +88,10 @@ actor {
   var users : TrieMap.TrieMap<Principal, User> = TrieMap.TrieMap<Principal, User>(Principal.equal, Principal.hash);
   /*stable*/ var oraclesCounter : Nat = 0;
 
-  public shared (msg) func createOracle() : async Nat {
+  public shared (msg) func createOracle(name : Text, template : Text) : async Nat {
     // assert not Principal.isAnonymous(msg.caller);
+    assert name != "";
+    assert template != "";
 
     let user = switch (users.get(msg.caller)) {
       case (null) {
@@ -95,7 +102,7 @@ actor {
       case (?existingUser) existingUser
     };
 
-    let newOracle = Oracle(oraclesCounter, msg.caller);
+    let newOracle = Oracle(oraclesCounter, msg.caller, name, template);
     user.putOracle(newOracle);
     oracles.put(newOracle.id, newOracle);
     oraclesCounter += 1;
@@ -140,6 +147,7 @@ actor {
       };
       case (?existingSubscription) {
         existingSubscription.message := message;
+        existingSubscription.timestamp := Time.now();
         ignore subscriptions.replace(topic, existingSubscription)
       }
     }
@@ -166,4 +174,10 @@ actor {
     }
   };
 
+  public query (msg) func getMyUser() : async UserDto {
+    return switch (users.get(msg.caller)) {
+      case null { { principal = msg.caller; oracles = [] } };
+      case (?user) user.getDto()
+    }
+  }
 }
