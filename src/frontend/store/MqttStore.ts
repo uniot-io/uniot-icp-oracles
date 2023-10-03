@@ -4,7 +4,7 @@ import * as mqtt from 'mqtt/dist/mqtt.min'
 import { IPublishPacket } from 'mqtt-packet'
 import { Buffer } from 'buffer'
 
-export type MqttMessageCallback = (topic: string, data: Buffer, packet?: IPublishPacket) => void
+export type MqttMessageCallback = (topic: string, data: Buffer, packet: IPublishPacket) => void
 
 export const useMqttStore = defineStore('mqttStore', () => {
   const client = ref<mqtt.MqttClient | undefined>()

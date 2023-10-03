@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
-import { useIcpAuthStore } from '@/store/IcpAuth'
+import { useIcpClientStore } from '@/store/IcpClient'
 import MainLayout from '@/layouts/MainLayout.vue'
 import GenericOracleLayout from '@/layouts/oracles/GenericOracleLayout.vue'
 import LoginView from '@/views/LoginView.vue'
@@ -26,8 +26,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'other-oracle', component: EmptyView }
     ],
     beforeEnter: () => {
-      const icpAuth = useIcpAuthStore()
-      if (!icpAuth.isAuthenticated) {
+      if (!useIcpClientStore().isAuthenticated) {
         return 'login'
       }
     }

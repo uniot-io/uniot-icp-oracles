@@ -8,17 +8,17 @@
         v-for="(topic, index) in form.topics"
         :key="index"
         :label="`Topic #${index + 1}`"
-        :prop="`topics.${index}.name`"
+        :prop="`topics[${index}].topic`"
         :rules="rules.topics"
       >
         <el-col :span="16">
           <el-form-item>
-            <el-input class="full-width" v-model="topic.name" />
+            <el-input class="full-width" v-model="topic.topic" />
           </el-form-item>
         </el-col>
         <el-col :span="4">
           <el-form-item required>
-            <el-select class="full-width" v-model="topic.settings.messageType" default-first-option>
+            <el-select class="full-width" v-model="topic.msgType" default-first-option>
               <el-option
                 v-for="messageType in MqttMessageTypes"
                 :key="messageType"
@@ -45,7 +45,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { FormRules, FormInstance } from 'element-plus'
-import { OracleSettings, OracleTopics } from '@/types/oracle'
+import { OracleSettings, OracleTopic } from '@/types/oracle'
 import { MqttMessageTypes } from '@/types/mqtt'
 
 type GenericOracleCreateViewEmits = {
@@ -54,7 +54,7 @@ type GenericOracleCreateViewEmits = {
 
 interface RuleForm {
   name: string
-  topics: OracleTopics[]
+  topics: OracleTopic[]
 }
 
 const emit = defineEmits<GenericOracleCreateViewEmits>()
@@ -68,12 +68,13 @@ const rules = reactive<FormRules<RuleForm>>({
 
 const form = reactive<OracleSettings>({
   name: '',
-  topics: [{ name: '', settings: { messageType: MqttMessageTypes[0] } }]
+  template: 'generic',
+  topics: [{ topic: '', msgType: MqttMessageTypes[0] }]
 })
 const formRef = ref<FormInstance>()
 
 function addTopic() {
-  form.topics.push({ name: '', settings: { messageType: MqttMessageTypes[0] } })
+  form.topics.push({ topic: '', msgType: MqttMessageTypes[0] })
 }
 
 function removeTopic(index: number) {
@@ -82,7 +83,7 @@ function removeTopic(index: number) {
 
 async function submit(formEl: FormInstance | undefined) {
   formEl?.clearValidate()
-  if (formEl?.validate()) {
+  if (await formEl?.validate()) {
     await emit('submit', form)
   }
 }
