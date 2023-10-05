@@ -121,7 +121,7 @@ async function getOracleData(oracleId: bigint) {
     }
     subscriptions.value.push(subscription[0])
     subTopicData.value.set(subscription[0].topic, {
-      date: subscription[0].timestamp ? new Date(Number(subscription[0].timestamp)) : new Date(),
+      date: subscription[0].timestamp ? new Date(Number(subscription[0].timestamp) / 1_000_000) : new Date(),
       message: Buffer.from(subscription[0].message),
       msgType: msgType as MqttMessageType,
       status: 'up-to-date',
