@@ -17,6 +17,7 @@
     "format": "prettier .  --write"
   },
   "dependencies": {
+    "@adonisjs/websocket-client": "^1.0.9",
     "@dfinity/agent": "^0.19.2",
     "@dfinity/auth-client": "^0.19.2",
     "@dfinity/candid": "^0.19.2",
@@ -26,6 +27,7 @@
     "element-plus": "^2.3.14",
     "mqtt": "^5.0.5",
     "pinia": "^2.1.6",
+    "regenerator-runtime": "^0.14.0",
     "vue": "^3.2.8",
     "vue-router": "^4.0.11"
   },

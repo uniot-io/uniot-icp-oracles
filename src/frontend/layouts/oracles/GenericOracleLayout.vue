@@ -18,6 +18,7 @@
 import { onMounted, ref } from 'vue'
 import { OracleSettings } from '@/types/oracle'
 import { useIcpClientStore } from '@/store/IcpClient'
+import { useAdonisWebSocket } from '@/composables/useAdonisWebSocket'
 import OracleMenu, { OracleMenuItem } from '@/components/oracle/OracleMenu.vue'
 import GenericOracleCreateView from '@/views/oracle/GenericOracleCreateView.vue'
 import GenericOracleTopicsView from '@/views/oracle/GenericOracleTopicsView.vue'
@@ -26,6 +27,7 @@ type SelectedView = 'create' | 'oracle' | undefined
 const createId = -1n
 
 const icpClient = useIcpClientStore()
+const { wsConnection } = useAdonisWebSocket()
 const loading = ref(true)
 const currentView = ref<SelectedView>(undefined)
 const currentOracleId = ref<bigint>(createId)
@@ -43,6 +45,10 @@ onMounted(async () => {
     currentOracleId.value = createId
   }
   loading.value = false
+
+  const subscription = wsConnection.value?.subscribe('guest')
+  subscription.on('me:res', console.log)
+  subscription.emit('me', { providerId: '5ghop-ontkl-wfxd3-gv4ag-nin5u-nqwqj-mb27h-zenwz-sr2vj-sgrdl-cqe' }) // TODO
 })
 
 async function onSelectOracle(oracle: bigint) {

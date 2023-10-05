@@ -47,9 +47,17 @@ import logo from '@/assets/logo.svg'
 import { useRoute } from 'vue-router'
 import { Document, Memo, More } from '@element-plus/icons-vue'
 import { useIcpClientStore } from '@/store/IcpClient'
+import { useAdonisWebSocket } from '@/composables/useAdonisWebSocket'
 
 const route = useRoute()
 const icpClient = useIcpClientStore()
+const { wsConnect, wsConnection } = useAdonisWebSocket()
+
+const options = {
+  url: 'ws://localhost:8888', // TODO
+  path: 'wsrt'
+}
+wsConnect(options)
 </script>
 
 <style lang="scss" scoped>
