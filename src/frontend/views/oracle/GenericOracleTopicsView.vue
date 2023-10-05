@@ -1,19 +1,33 @@
 <template>
-  <el-container class="full-height">
-    <el-scrollbar class="full-width" v-loading="loading" element-loading-text="Subscribing...">
-      <el-table :data="tableRowsData" default-expand-all row-key="id">
-        <el-table-column label="Date" prop="date" width="250" />
-        <el-table-column label="Topic" prop="topic" width="250" />
-        <el-table-column label="Message" prop="message" width="500" />
-        <el-table-column label="Status" prop="status" width="100" />
-        <el-table-column label="Security" prop="security" width="100" />
-      </el-table>
-    </el-scrollbar>
-  </el-container>
+  <el-card
+    class="full-width full-height"
+    v-loading="loading"
+    element-loading-text="Subscribing..."
+    shadow="never"
+    style="border: none"
+  >
+    <el-button type="primary" :icon="RefreshLeft" @click="syncOracleData">Sync Oracle</el-button>
+    <el-table :data="tableRowsData" default-expand-all row-key="id">
+      <el-table-column label="Date" prop="date" width="250" />
+      <el-table-column label="Topic" prop="topic" width="250" />
+      <el-table-column label="Message" prop="message" min-width="500" />
+      <el-table-column label="Status" prop="status" width="150">
+        <template #default="scope">
+          <el-tag :type="statusTagType(scope.row.status)">{{ scope.row.status }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="Security" prop="security" width="150">
+        <template #default="scope">
+          <el-tag :type="securityTagType(scope.row.security)">{{ scope.row.security }}</el-tag>
+        </template>
+      </el-table-column>
+    </el-table>
+  </el-card>
 </template>
 
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
+import { RefreshLeft } from '@element-plus/icons-vue'
 import { Buffer } from 'buffer'
 import { IPublishPacket } from 'mqtt-packet'
 import { MqttMessageSecurity, MqttMessageStatus, MqttMessageType } from '@/types/mqtt'
@@ -130,6 +144,18 @@ async function getOracleData(oracleId: bigint) {
   }
 }
 
+async function syncOracleData() {
+  loading.value = true
+  for (const [topic, data] of subTopicData.value.entries()) {
+    if (data.status === 'outdated') {
+      const mqttData = mqttTopicData.value.get(topic)
+      await icpClient.actor?.publish(topic, mqttData!.message)
+    }
+  }
+  await getOracleData(props.oracleId)
+  loading.value = false
+}
+
 async function subscribeTopics() {
   for (const { topic } of subscriptions.value) {
     await mqttClient
@@ -162,6 +188,26 @@ function onMqttTopicMessage(topic: string, message: Buffer, packet: IPublishPack
       status: msgStatus,
       security: 'unsecured'
     })
+  }
+}
+
+function statusTagType(status: MqttMessageStatus) {
+  switch (status) {
+    case 'up-to-date':
+      return 'success'
+    case 'outdated':
+      return 'danger'
+    default:
+      return ''
+  }
+}
+
+function securityTagType(security: MqttMessageSecurity) {
+  switch (security) {
+    case 'unsecured':
+      return 'warning'
+    default:
+      return ''
   }
 }
 </script>

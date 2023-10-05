@@ -1,6 +1,6 @@
 <template>
-  <el-card class="full-width" shadow="never" style="border: none; max-width: 800px">
-    <el-form ref="formRef" :model="form" label-position="top" v-loading="false">
+  <el-card class="full-width" shadow="never" style="border: none">
+    <el-form ref="formRef" :model="form" label-position="top" v-loading="false" style="max-width: 800px">
       <el-form-item label="Oracle name" :prop="'name'" :rules="rules.name">
         <el-input v-model="form.name" />
       </el-form-item>
