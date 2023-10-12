@@ -146,12 +146,8 @@ async function getOracleData(oracleId: bigint) {
 
 async function syncOracleData() {
   loading.value = true
-  for (const [topic, data] of subTopicData.value.entries()) {
-    if (data.status === 'outdated') {
-      const mqttData = mqttTopicData.value.get(topic)
-      await icpClient.actor?.publish(topic, mqttData!.message)
-    }
-  }
+  const [successfullUpdates, totalCyclesUsed] = await icpClient.actor?.syncOracle(props.oracleId)
+  console.log(`successfull updates: ${successfullUpdates}, total cycles used: ${totalCyclesUsed}`)
   await getOracleData(props.oracleId)
   loading.value = false
 }

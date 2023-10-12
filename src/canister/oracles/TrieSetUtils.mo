@@ -1,7 +1,7 @@
 import TrieSet "mo:base/TrieSet";
 import Nat "mo:base/Nat";
 
-module TrieSetUtil {
+module TrieSetUtils {
 
   public class Set<T>(isEq : (T, T) -> Bool, hashOf : T -> Nat32) {
     private var set : TrieSet.Set<T> = TrieSet.empty<T>();
