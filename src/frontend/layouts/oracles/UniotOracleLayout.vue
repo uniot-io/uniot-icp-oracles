@@ -1,14 +1,21 @@
 <template>
   <el-container class="full-height" v-loading="loading" element-loading-text="Loading Uniot devices...">
     <oracle-menu
-      v-if="!loading && oracleMenuItems.length"
+      v-if="existingOracles.length || suggestedOracles.length"
       :with-create-item="false"
-      :default-selected-id="currentDeviceId"
-      :oracles="oracleMenuItems"
+      :default-selected-id="currentOracleId"
+      :oracles="existingOracles"
+      :suggested="suggestedOracles"
       @select="onSelectOracle"
     />
-    <uniot-oracle-device-view v-if="!loading && oracleMenuItems.length" :device-id="currentDeviceId" device-name="" />
-    <el-main v-if="!oracleMenuItems.length">
+    <generic-oracle-topics-view v-if="isCurrentOracleExisted" :oracleId="currentOracleId" />
+    <uniot-oracle-device-view
+      v-else
+      v-if="!loading && suggestedOracles.length"
+      :device-id="currentOracleId"
+      :device="uniotDevices.get(currentOracleId)!"
+    />
+    <el-main v-if="!suggestedOracles.length">
       <el-empty />
     </el-main>
   </el-container>
@@ -26,78 +33,85 @@ import { deviceStatusTopic, defaultDomain, parseDeviceTopic } from '@/utils/mqtt
 import { OracleDto } from '@/../declarations/oracles_backend/oracles_backend.did'
 import OracleMenu, { OracleMenuItem } from '@/components/oracle/OracleMenu.vue'
 import UniotOracleDeviceView from '@/views/oracle/UniotOracleDeviceView.vue'
-
-interface UniotDeviceData {
-  id: bigint // bigint?
-  online: 0 | 1
-  creator: string
-  timestamp: number
-  // primitives: string[]
-  // mqtt_size: number
-  // d_in: 3
-  // d_out: 3
-  // a_in: 1
-  // a_out: 3
-}
-
-interface UniotDevice {
-  name: string
-  data: UniotDeviceData
-}
+import GenericOracleTopicsView from '@/views/oracle/GenericOracleTopicsView.vue'
+import { UniotDevice } from '@/types/uniot'
+import { OracleTemplate } from '@/types/oracle'
+import { ca } from 'element-plus/es/locale'
 
 const icpClient = useIcpClientStore()
 const mqttClient = useMqttStore()
 const uniotClient = useUniotStore()
+
 const loading = ref(true)
-const currentDeviceId = ref(-1n)
-const uniotDevices = ref<Map<string, UniotDevice>>(new Map())
+const uniotDevices = ref<Map<bigint, UniotDevice>>(new Map())
 const uniotOracles = ref<Array<OracleDto>>([])
-const oracleMenuItems = computed(() => {
-  const items: OracleMenuItem[] = []
-  for (const device of uniotDevices.value.values()) {
-    items.push({
-      id: device.data.id,
-      name: device.name
-    })
-  }
-  return items
+const deviceStatusWildTopic = computed(() => deviceStatusTopic(defaultDomain, uniotClient.userId, '+'))
+
+const currentOracleId = ref(0n)
+const existingOracles = ref<Array<OracleMenuItem>>([])
+const suggestedOracles = computed((): OracleMenuItem[] => {
+  return Array.from(uniotDevices.value.values(), (device) => ({
+    id: calcDeviceId(device.name),
+    name: device.name
+  }))
+})
+
+const isCurrentOracleExisted = computed(() => {
+  return existingOracles.value.some(({ id }) => id === currentOracleId.value)
 })
 
 onMounted(async () => {
   loading.value = true
-  const currentUser = await icpClient.currentUser()
-  uniotOracles.value = currentUser.oracles.filter(({ template }) => template === 'uniot')
+  await loadUserOracles()
   await subscribeDeviceTopic()
   // wait device messages from mqtt
   await new Promise((resolve) => {
-    setTimeout(resolve, 2500)
+    setTimeout(resolve, 500)
   })
-  if (currentDeviceId.value === -1n && oracleMenuItems.value.length > 0) {
-    currentDeviceId.value = oracleMenuItems.value[0].id
-  }
   loading.value = false
-
-  console.log('userId', uniotClient.userId)
 })
 
 onUnmounted(async () => {
-  await mqttClient.unsubscribe(deviceStatusTopic(defaultDomain, icpClient.principal.full, '+'))
+  await mqttClient.unsubscribe(deviceStatusWildTopic.value)
 })
 
+async function loadUserOracles() {
+  const currentUser = await icpClient.currentUser()
+  if (currentUser.oracles?.length) {
+    existingOracles.value = currentUser.oracles
+      .filter(({ template }) => template === OracleTemplate.uniotDevice)
+      .map(({ id, name }) => ({ id, name }))
+    if (currentOracleId.value === 0n && existingOracles.value.length) {
+      currentOracleId.value = existingOracles.value[0].id
+    }
+  }
+}
+
 async function subscribeDeviceTopic() {
-  await mqttClient
-    .subscribe(deviceStatusTopic(defaultDomain, icpClient.principal.full, '+'), onDeviceMessage)
-    .catch((error) => console.error(`failed to subscribe to topic: ${error}`))
+  console.log(deviceStatusWildTopic.value)
+  try {
+    await mqttClient.subscribe(deviceStatusWildTopic.value, onDeviceMessage)
+  } catch (error) {
+    console.error(`failed to subscribe to topic: ${error}`)
+  }
 }
 
 function onDeviceMessage(topic: string, message: Buffer, packet: IPublishPacket) {
   if (packet.retain) {
     const { deviceId } = parseDeviceTopic(topic)
-    uniotDevices.value.set(topic, { name: deviceId, data: CBOR.decode(message) })
+    const intDeviceId = calcDeviceId(deviceId)
+    uniotDevices.value.set(intDeviceId, { name: deviceId, data: CBOR.decode(message) })
+    if (currentOracleId.value === 0n) {
+      currentOracleId.value = intDeviceId
+    }
   }
 }
 
 async function onSelectOracle(oracle: bigint) {
-  currentDeviceId.value = oracle
+  currentOracleId.value = oracle
+}
+
+function calcDeviceId(deviceId: string): bigint {
+  return BigInt(`0x${deviceId}`)
 }
 </script>

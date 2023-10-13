@@ -157,17 +157,21 @@ async function subscribeTopics() {
     if (topic.search(/[+#]/) !== -1) {
       console.error(`can't subscribe to wildcard topic: ${topic}`)
     }
-    await mqttClient
-      .subscribe(topic, onMqttTopicMessage)
-      .catch((error) => console.error(`failed to subscribe to topic: ${topic}, ${error}`))
+    try {
+      await mqttClient.subscribe(topic, onMqttTopicMessage)
+    } catch (error) {
+      console.error(`failed to subscribe to topic: ${topic}, ${error}`)
+    }
   }
 }
 
 async function unsubscribeTopics() {
   for (const { topic } of subscriptions.value) {
-    await mqttClient
-      .unsubscribe(topic)
-      .catch((error) => console.error(`failed to unsubscribe from topic: ${topic}, ${error}`))
+    try {
+      await mqttClient.unsubscribe(topic)
+    } catch (error) {
+      console.error(`failed to unsubscribe from topic: ${topic}, ${error}`)
+    }
   }
 }
 

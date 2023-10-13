@@ -45,7 +45,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { FormRules, FormInstance } from 'element-plus'
-import { OracleSettings, OracleTopic } from '@/types/oracle'
+import { OracleSettings, OracleTemplate, OracleTopic } from '@/types/oracle'
 import { MqttMessageTypes } from '@/types/mqtt'
 
 type GenericOracleCreateViewEmits = {
@@ -68,7 +68,7 @@ const rules = reactive<FormRules<RuleForm>>({
 
 const form = reactive<OracleSettings>({
   name: '',
-  template: 'generic',
+  template: OracleTemplate.generic,
   topics: [{ topic: '', msgType: MqttMessageTypes[0] }]
 })
 const formRef = ref<FormInstance>()

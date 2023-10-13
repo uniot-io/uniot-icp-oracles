@@ -10,16 +10,24 @@
         <el-icon><plus /></el-icon>
         <template #title>Create Oracle</template>
       </el-menu-item>
-      <el-menu-item v-for="oracle in props.oracles" :key="oracle.id.toString(10)" :index="oracle.id.toString(10)">
-        <el-icon><connection /></el-icon>
-        <template #title>{{ oracle.name }}</template>
-      </el-menu-item>
+      <el-menu-item-group v-if="props.oracles && props.oracles.length" title="Existing Oracles">
+        <el-menu-item v-for="oracle in props.oracles" :key="oracle.id.toString(10)" :index="oracle.id.toString(10)">
+          <el-icon><connection /></el-icon>
+          <span>{{ oracle.name }}</span>
+        </el-menu-item>
+      </el-menu-item-group>
+      <el-menu-item-group v-if="props.suggested && props.suggested.length" title="Suggested Oracles">
+        <el-menu-item v-for="oracle in props.suggested" :key="oracle.id.toString(10)" :index="oracle.id.toString(10)">
+          <el-icon><edit /></el-icon>
+          <span>{{ oracle.name }}</span>
+        </el-menu-item>
+      </el-menu-item-group>
     </el-scrollbar>
   </el-menu>
 </template>
 
 <script setup lang="ts">
-import { Plus, Connection } from '@element-plus/icons-vue'
+import { Plus, Connection, Edit } from '@element-plus/icons-vue'
 
 export type OracleMenuItem = {
   id: bigint
@@ -31,6 +39,7 @@ type OracleMenuProps = {
   withCreateItem: boolean
   createId?: bigint
   oracles: OracleMenuItem[]
+  suggested?: OracleMenuItem[]
 }
 
 type OracleMenuEmits = {
