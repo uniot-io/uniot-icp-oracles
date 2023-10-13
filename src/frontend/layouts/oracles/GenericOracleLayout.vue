@@ -1,6 +1,7 @@
 <template>
   <el-container class="full-height" v-loading="loading" element-loading-text="Loading generic oracles...">
     <oracle-menu
+      with-create-item
       :oracles="oracles"
       :create-id="createId"
       :default-selected-id="currentOracleId"

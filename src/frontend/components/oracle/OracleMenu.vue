@@ -6,7 +6,7 @@
     @select="onSelect"
   >
     <el-scrollbar>
-      <el-menu-item :index="props.createId.toString(10)">
+      <el-menu-item v-if="props.withCreateItem" :index="props.createId!.toString(10)">
         <el-icon><plus /></el-icon>
         <template #title>Create Oracle</template>
       </el-menu-item>
@@ -28,7 +28,8 @@ export type OracleMenuItem = {
 
 type OracleMenuProps = {
   defaultSelectedId: bigint
-  createId: bigint
+  withCreateItem: boolean
+  createId?: bigint
   oracles: OracleMenuItem[]
 }
 

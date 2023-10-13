@@ -11,6 +11,7 @@ import LegacyLayout from '@/layouts/LegacyLayout.vue'
 import LegacyIndexView from '@/views/legacy/LegacyIndexView.vue'
 import LegacyAboutView from '@/views/legacy/LegacyAboutView.vue'
 import LegacyExampleView from '@/views/legacy/LegacyExampleView.vue'
+import UniotOracleLayout from '@/layouts/oracles/UniotOracleLayout.vue'
 
 // NOTE: Avoid using dynamic imports (e.g., `component: async () => await import('@/views/Example.vue')`) in this application.
 // The local development setup with the Internet Computer canister expects either a `canisterId` parameter in request URLs
@@ -22,7 +23,7 @@ const routes: RouteRecordRaw[] = [
     redirect: 'generic-oracle',
     children: [
       { path: 'generic-oracle', component: GenericOracleLayout },
-      { path: 'uniot-oracle', component: EmptyView },
+      { path: 'uniot-oracle', component: UniotOracleLayout },
       { path: 'other-oracle', component: EmptyView }
     ],
     beforeEnter: () => {

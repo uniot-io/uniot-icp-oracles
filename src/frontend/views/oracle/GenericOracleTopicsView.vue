@@ -154,6 +154,9 @@ async function syncOracleData() {
 
 async function subscribeTopics() {
   for (const { topic } of subscriptions.value) {
+    if (topic.search(/[+#]/) !== -1) {
+      console.error(`can't subscribe to wildcard topic: ${topic}`)
+    }
     await mqttClient
       .subscribe(topic, onMqttTopicMessage)
       .catch((error) => console.error(`failed to subscribe to topic: ${topic}, ${error}`))
