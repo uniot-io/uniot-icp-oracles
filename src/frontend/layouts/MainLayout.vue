@@ -44,20 +44,24 @@
 
 <script setup lang="ts">
 import logo from '@/assets/logo.svg'
+import { onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { Document, Memo, More } from '@element-plus/icons-vue'
 import { useIcpClientStore } from '@/store/IcpClient'
-import { useAdonisWebSocket } from '@/composables/useAdonisWebSocket'
+import { useUniotStore } from '@/store/UniotStore'
 
 const route = useRoute()
 const icpClient = useIcpClientStore()
-const { wsConnect, wsConnection } = useAdonisWebSocket()
+const uniotClient = useUniotStore()
 
-const options = {
-  url: 'ws://localhost:8888', // TODO
-  path: 'wsrt'
-}
-wsConnect(options)
+onMounted(() => {
+  uniotClient.connect()
+  uniotClient.processIdentity(icpClient.principal.full)
+})
+
+onUnmounted(() => {
+  uniotClient.disconnect()
+})
 </script>
 
 <style lang="scss" scoped>

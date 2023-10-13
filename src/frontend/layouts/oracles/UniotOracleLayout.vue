@@ -21,6 +21,7 @@ import { IPublishPacket } from 'mqtt-packet'
 import * as CBOR from 'cbor-web'
 import { useIcpClientStore } from '@/store/IcpClient'
 import { useMqttStore } from '@/store/MqttStore'
+import { useUniotStore } from '@/store/UniotStore'
 import { deviceStatusTopic, defaultDomain, parseDeviceTopic } from '@/utils/mqttTopics'
 import { OracleDto } from '@/../declarations/oracles_backend/oracles_backend.did'
 import OracleMenu, { OracleMenuItem } from '@/components/oracle/OracleMenu.vue'
@@ -46,6 +47,7 @@ interface UniotDevice {
 
 const icpClient = useIcpClientStore()
 const mqttClient = useMqttStore()
+const uniotClient = useUniotStore()
 const loading = ref(true)
 const currentDeviceId = ref(-1n)
 const uniotDevices = ref<Map<string, UniotDevice>>(new Map())
@@ -74,6 +76,8 @@ onMounted(async () => {
     currentDeviceId.value = oracleMenuItems.value[0].id
   }
   loading.value = false
+
+  console.log('userId', uniotClient.userId)
 })
 
 onUnmounted(async () => {
