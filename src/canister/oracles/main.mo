@@ -1,81 +1,14 @@
-import Blob "mo:base/Blob";
-import Principal "mo:base/Principal";
+import Nat "mo:base/Nat";
+import Text "mo:base/Text";
+import Time "mo:base/Time";
 import RBTree "mo:base/RBTree";
 import TrieMap "mo:base/TrieMap";
-import Text "mo:base/Text";
-import Nat "mo:base/Nat";
-import Array "mo:base/Array";
-import Hash "mo:base/Hash";
-import Time "mo:base/Time";
-import Int "mo:base/Int";
-import TrieSetUtil "TrieSetUtil";
+import Principal "mo:base/Principal";
+import Broker "Broker";
+import HttpTypes "HttpTypes";
+import OracleTypes "OracleTypes";
 
 actor {
-  type SubscriptionDto = {
-    topic : Text;
-    message : Blob;
-    timestamp : Int;
-    refCount : Nat
-  };
-
-  type OracleDto = {
-    id : Nat;
-    owner : Principal;
-    name : Text;
-    template : Text;
-    subscriptions : [(Text, Text)]
-  };
-
-  type UserDto = {
-    principal : Principal;
-    oracles : [Nat]
-  };
-
-  class Subscription(_topic : Text) {
-    public let topic = _topic;
-    public var message = Blob.fromArray([]);
-    public var timestamp : Int = 0;
-    public var refCount : Nat = 0;
-
-    public func getDto() : SubscriptionDto { { topic; message; timestamp; refCount } }
-  };
-
-  class Oracle(_id : Nat, _owner : Principal, _name : Text, _template : Text) {
-    public let id = _id;
-    public let owner = _owner;
-    public let name = _name;
-    public let template = _template;
-    public let subscriptions = TrieMap.TrieMap<Text, Text>(Text.equal, Text.hash);
-
-    public func getDto() : OracleDto {
-      let subscriptionsArray = Array.init<(Text, Text)>(subscriptions.size(), ("", ""));
-      var i = 0;
-      for ((key, value) in subscriptions.entries()) {
-        subscriptionsArray[i] := (key, value);
-        i += 1
-      };
-      { id; owner; name; template; subscriptions = Array.freeze<(Text, Text)>(subscriptionsArray) }
-    };
-
-    public func subscribe(subscription : Subscription, messageType : Text) {
-      subscriptions.put(subscription.topic, messageType);
-      subscription.refCount += 1
-    }
-  };
-
-  class User(_principal : Principal) {
-    public let principal = _principal;
-    public var oracles = TrieSetUtil.Set<Nat>(Nat.equal, Hash.hash);
-
-    public func getDto() : UserDto {
-      let oraclesArray = oracles.toArray();
-      { principal; oracles = oraclesArray }
-    };
-
-    public func putOracle(oracle : Oracle) {
-      oracles.put(oracle.id)
-    }
-  };
 
   // system func preupgrade() {
   // };
@@ -83,9 +16,14 @@ actor {
   // system func postupgrade() {
   // };
 
-  var subscriptions : TrieMap.TrieMap<Text, Subscription> = TrieMap.TrieMap<Text, Subscription>(Text.equal, Text.hash);
-  var oracles : RBTree.RBTree<Nat, Oracle> = RBTree.RBTree<Nat, Oracle>(Nat.compare);
-  var users : TrieMap.TrieMap<Principal, User> = TrieMap.TrieMap<Principal, User>(Principal.equal, Principal.hash);
+  public query func transformBrokerResponse(raw : HttpTypes.TransformArgs) : async HttpTypes.HttpResponsePayload {
+    Broker.transformResponse(raw)
+  };
+
+  let broker = Broker.Broker("mqtt.uniot.io", transformBrokerResponse);
+  var subscriptions : TrieMap.TrieMap<Text, OracleTypes.Subscription> = TrieMap.TrieMap<Text, OracleTypes.Subscription>(Text.equal, Text.hash);
+  var oracles : RBTree.RBTree<Nat, OracleTypes.Oracle> = RBTree.RBTree<Nat, OracleTypes.Oracle>(Nat.compare);
+  var users : TrieMap.TrieMap<Principal, OracleTypes.User> = TrieMap.TrieMap<Principal, OracleTypes.User>(Principal.equal, Principal.hash);
   /*stable*/ var oraclesCounter : Nat = 0;
 
   public shared (msg) func createOracle(name : Text, template : Text) : async Nat {
@@ -95,14 +33,14 @@ actor {
 
     let user = switch (users.get(msg.caller)) {
       case (null) {
-        let newUser = User(msg.caller);
+        let newUser = OracleTypes.User(msg.caller);
         users.put(msg.caller, newUser);
         newUser
       };
       case (?existingUser) existingUser
     };
 
-    let newOracle = Oracle(oraclesCounter, msg.caller, name, template);
+    let newOracle = OracleTypes.Oracle(oraclesCounter, msg.caller, name, template);
     user.putOracle(newOracle);
     oracles.put(newOracle.id, newOracle);
     oraclesCounter += 1;
@@ -129,7 +67,7 @@ actor {
 
       let subscription = switch (subscriptions.get(newSub.topic)) {
         case (null) {
-          let newSubscription = Subscription(newSub.topic);
+          let newSubscription = OracleTypes.Subscription(newSub.topic);
           subscriptions.put(newSub.topic, newSubscription);
           newSubscription
         };
@@ -140,7 +78,7 @@ actor {
     }
   };
 
-  public shared (msg) func publish(topic : Text, message : Blob) {
+  private func publish(topic : Text, message : Blob) {
     switch (subscriptions.get(topic)) {
       case (null) {
         assert false
@@ -153,28 +91,39 @@ actor {
     }
   };
 
-  public query func getSubscription(topic : Text) : async ?SubscriptionDto {
+  public shared (msg) func syncOracle(oracleId : Nat) : async (Nat, Nat) {
+    let existingOracle = switch (oracles.get(oracleId)) {
+      case (null) { assert false; return (0, 0) };
+      case (?oracle) oracle
+    };
+
+    assert existingOracle.owner == msg.caller;
+
+    await broker.handleRetainedMessages(existingOracle.getSubscriptionsIter(), publish)
+  };
+
+  public query func getSubscription(topic : Text) : async ?OracleTypes.SubscriptionDto {
     switch (subscriptions.get(topic)) {
       case null null;
       case (?subscription) ?subscription.getDto()
     }
   };
 
-  public query func getOracle(oracleId : Nat) : async ?OracleDto {
+  public query func getOracle(oracleId : Nat) : async ?OracleTypes.OracleDto {
     switch (oracles.get(oracleId)) {
       case null null;
       case (?oracle) ?oracle.getDto()
     }
   };
 
-  public query func getUser(principal : Principal) : async ?UserDto {
+  public query func getUser(principal : Principal) : async ?OracleTypes.UserDto {
     return switch (users.get(principal)) {
       case null null;
       case (?user) ?user.getDto()
     }
   };
 
-  public query (msg) func getMyUser() : async UserDto {
+  public query (msg) func getMyUser() : async OracleTypes.UserDto {
     return switch (users.get(msg.caller)) {
       case null { { principal = msg.caller; oracles = [] } };
       case (?user) user.getDto()

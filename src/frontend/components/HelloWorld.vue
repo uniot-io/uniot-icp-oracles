@@ -8,12 +8,10 @@
 </template>
 
 <script lang="ts">
-import { ref, onMounted, defineComponent } from 'vue'
-// import { counterAgent, createActor } from '@/agent_factory'
+import { ref, defineComponent } from 'vue'
 import { createActor } from '@/../declarations/oracles_backend'
 import { AuthClient } from '@dfinity/auth-client'
 import { HttpAgent } from '@dfinity/agent'
-import { id } from 'element-plus/es/locale'
 
 export default defineComponent({
   name: 'HelloWorld',
@@ -77,7 +75,7 @@ export default defineComponent({
       const myUser = await actor.getMyUser()
       console.log('myUser:', myUser)
 
-      for (const id of user[0].oracles) {
+      for (const id of user[0]!.oracles) {
         const oracle = await actor.getOracle(id)
         console.log('user oracle:', oracle)
       }

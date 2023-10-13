@@ -1,4 +1,4 @@
-import { Buffer } from 'buffer'
+import './global'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
@@ -7,14 +7,6 @@ import App from '@/App.vue'
 import router from './router'
 
 import '@/assets/scss/index.scss'
-
-// @dfinity/agent requires this. Can be removed once it's fixed
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-;(window as any).global = window
-
-// Workaround for setting Buffer at a single and predictable place
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-;(window as any).Buffer = Buffer
 
 const app = createApp(App)
 

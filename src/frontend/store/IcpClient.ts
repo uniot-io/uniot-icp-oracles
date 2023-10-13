@@ -1,24 +1,38 @@
 import { defineStore } from 'pinia'
 import { computed, ref, watch, watchEffect } from 'vue'
-import { AuthClient } from '@dfinity/auth-client'
-import { HttpAgent, Identity } from '@dfinity/agent'
 import router from '@/router'
+import { AuthClient } from '@dfinity/auth-client'
+import { ActorSubclass, HttpAgent, Identity } from '@dfinity/agent'
+import { createActor } from '@/../declarations/oracles_backend'
+import { _SERVICE, OracleDto, UserDto } from '@/../declarations/oracles_backend/oracles_backend.did'
 
 // Refer to documentation: https://agent-js.icp.xyz/
-export const useIcpAuthStore = defineStore('icpAuthStore', () => {
+export const useIcpClientStore = defineStore('icpClientStore', () => {
   let authClient: AuthClient | undefined // can't be stored in ref...
   const authenticated = ref(false)
   const identity = ref<Identity>()
-  const agent = ref<HttpAgent>()
-  const principal = computed(() => identity.value?.getPrincipal().toString() || '')
+  const actor = ref<ActorSubclass<_SERVICE>>()
+  const user = ref<UserDto>()
+  const oracles = ref<OracleDto[]>([])
   const isAuthenticated = computed(() => authenticated.value)
-
-  watch(authenticated, async (success) => {
-    if (success) {
-      identity.value = authClient?.getIdentity()
-      agent.value = new HttpAgent({ identity: identity.value })
+  const principal = computed(() => {
+    return {
+      full: identity.value?.getPrincipal().toString() || '',
+      trimmed: identity.value ? _trimmedPrincipal(identity.value) : ''
     }
   })
+
+  watch(
+    () => authenticated.value,
+    async (success) => {
+      if (success) {
+        identity.value = authClient!.getIdentity()
+        const agent = new HttpAgent({ identity: identity.value })
+        actor.value = createActor(import.meta.env.VITE_APP_ORACLES_BACKEND_CANISTER_ID, { agent })
+      }
+    },
+    { immediate: true }
+  )
 
   watchEffect(async () => {
     await _init().catch((error) => {
@@ -32,7 +46,6 @@ export const useIcpAuthStore = defineStore('icpAuthStore', () => {
     if (authenticated.value) {
       return
     }
-
     authenticated.value = await new Promise((resolve, reject) => {
       authClient
         ?.login({
@@ -63,6 +76,29 @@ export const useIcpAuthStore = defineStore('icpAuthStore', () => {
     }
   }
 
+  async function currentUser() {
+    await _getUser()
+    await _getOracles()
+    return {
+      user: user.value,
+      oracles: oracles.value
+    }
+  }
+
+  async function _getUser() {
+    user.value = await actor.value?.getMyUser()
+  }
+
+  async function _getOracles() {
+    oracles.value = []
+    for (const oracleId of user.value!.oracles) {
+      const oracle = await actor.value?.getOracle(oracleId)
+      if (oracle?.length) {
+        oracles.value.push(oracle[0])
+      }
+    }
+  }
+
   async function _init(): Promise<void> {
     if (authClient === undefined) {
       authClient = await AuthClient.create({
@@ -80,10 +116,23 @@ export const useIcpAuthStore = defineStore('icpAuthStore', () => {
   async function _cleanup() {
     authClient = undefined
     identity.value = undefined
-    agent.value = undefined
+    user.value = undefined
+    oracles.value = []
     authenticated.value = false
     await router.push('login')
   }
 
-  return { isAuthenticated, principal, login, logout }
+  function _trimmedPrincipal(identity: Identity) {
+    const principal = identity.getPrincipal().toString().split('-')
+    return principal ? `${principal[0]}-${principal[1]}...${principal[principal.length - 1]}` : ''
+  }
+
+  return {
+    isAuthenticated,
+    principal,
+    actor,
+    currentUser,
+    login,
+    logout
+  }
 })

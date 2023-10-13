@@ -27,12 +27,12 @@
       <el-row class="un-account">
         <el-col>
           <el-text size="large">Principal ID:&nbsp;</el-text>
-          <el-tooltip :content="icpAuth.principal" placement="top">
-            {{ trimmedPrincipal() }}
+          <el-tooltip :content="icpClient.principal.full" placement="top">
+            {{ icpClient.principal.trimmed }}
           </el-tooltip>
         </el-col>
         <el-col>
-          <el-button class="full-width" @click="icpAuth.logout()">Logout</el-button>
+          <el-button class="full-width" @click="icpClient.logout()">Logout</el-button>
         </el-col>
       </el-row>
     </el-aside>
@@ -46,18 +46,18 @@
 import logo from '@/assets/logo.svg'
 import { useRoute } from 'vue-router'
 import { Document, Memo, More } from '@element-plus/icons-vue'
-import { useIcpAuthStore } from '@/store/IcpAuth'
+import { useIcpClientStore } from '@/store/IcpClient'
+import { useAdonisWebSocket } from '@/composables/useAdonisWebSocket'
 
 const route = useRoute()
-const icpAuth = useIcpAuthStore()
+const icpClient = useIcpClientStore()
+const { wsConnect, wsConnection } = useAdonisWebSocket()
 
-function trimmedPrincipal() {
-  if (icpAuth.isAuthenticated) {
-    const principal = icpAuth.principal!.split('-')
-    return `${principal[0]}-${principal[1]}...${principal[principal.length - 1]}`
-  }
-  return ''
+const options = {
+  url: 'ws://localhost:8888', // TODO
+  path: 'wsrt'
 }
+wsConnect(options)
 </script>
 
 <style lang="scss" scoped>

@@ -14,18 +14,18 @@
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import logo from '@/assets/logo.svg'
-import { useIcpAuthStore } from '@/store/IcpAuth'
+import { useIcpClientStore } from '@/store/IcpClient'
 
 const route = useRoute()
 const router = useRouter()
-const icpAuth = useIcpAuthStore()
+const icpClient = useIcpClientStore()
 const error = ref(false)
 const errorMessage = ref('')
 
 watch(
-  () => icpAuth.isAuthenticated,
-  () => {
-    if (icpAuth.isAuthenticated) {
+  () => icpClient.isAuthenticated,
+  (isAuthenticated) => {
+    if (isAuthenticated) {
       router.replace(route.redirectedFrom || '/')
     }
   }
@@ -34,7 +34,7 @@ watch(
 async function login() {
   try {
     error.value = false
-    await icpAuth.login()
+    await icpClient.login()
   } catch (err) {
     console.error(err)
     error.value = true
