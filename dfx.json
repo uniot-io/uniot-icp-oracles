@@ -1,7 +1,7 @@
 {
   "canisters": {
     "oracles_backend": {
-      "main": "src/canister/counter/main.mo",
+      "main": "src/canister/oracles/main.mo",
       "type": "motoko"
     },
     "oracles_frontend": {
