@@ -1,10 +1,5 @@
 <template>
-  <el-menu
-    class="un-oracle-menu"
-    :default-active="props.defaultSelectedId.toString(10)"
-    mode="vertical"
-    @select="onSelect"
-  >
+  <el-menu class="un-oracle-menu" :default-active="selectedId" mode="vertical" @select="onSelect">
     <el-scrollbar>
       <el-menu-item v-if="props.withCreateItem" :index="props.createId!.toString(10)">
         <el-icon><plus /></el-icon>
@@ -24,15 +19,36 @@
             <span>{{ oracle.name }}</span>
           </el-menu-item>
         </el-sub-menu>
-        <el-menu-item
-          v-else
-          v-for="oracle in props.oracles"
-          :key="oracle.id.toString(10)"
-          :index="oracle.id.toString(10)"
-        >
-          <el-icon><connection /></el-icon>
-          <span>{{ oracle.name }}</span>
-        </el-menu-item>
+        <template v-else>
+          <el-sub-menu
+            v-if="views"
+            v-for="oracle in props.oracles"
+            :key="`${oracle.id.toString(10)}-parent`"
+            :index="`${oracle.id.toString(10)}-parent`"
+          >
+            <template #title>
+              <el-icon><connection /></el-icon>
+              <span>{{ oracle.name }}</span>
+            </template>
+            <el-menu-item
+              v-for="view in views"
+              :key="`${oracle.id.toString(10)}+${view}`"
+              :index="`${oracle.id.toString(10)}+${view}`"
+            >
+              <el-icon><data-board /></el-icon>
+              <span>{{ view }}</span>
+            </el-menu-item>
+          </el-sub-menu>
+          <el-menu-item
+            v-else
+            v-for="oracle in props.oracles"
+            :key="oracle.id.toString(10)"
+            :index="oracle.id.toString(10)"
+          >
+            <el-icon><connection /></el-icon>
+            <span>{{ oracle.name }}</span>
+          </el-menu-item>
+        </template>
       </el-menu-item-group>
       <el-menu-item-group v-if="props.suggested && props.suggested.length" title="Suggested Oracles">
         <el-menu-item v-for="oracle in props.suggested" :key="oracle.id.toString(10)" :index="oracle.id.toString(10)">
@@ -62,14 +78,24 @@ type OracleMenuProps = {
   oracles: OracleMenuItem[]
   suggested?: OracleMenuItem[]
   grouping?: boolean
+  views?: string[]
 }
 
 type OracleMenuEmits = {
-  (e: 'select', item: bigint): void
+  (e: 'select', item: { oracleId: bigint; view: string | undefined }): void
 }
 
 const props = defineProps<OracleMenuProps>()
 const emit = defineEmits<OracleMenuEmits>()
+
+const selectedId = computed(() => {
+  if (props.oracles.some((o) => o.id === props.defaultSelectedId)) {
+    if (!props.grouping && props.views) {
+      return `${props.defaultSelectedId.toString(10)}+${props.views[0]}`
+    }
+  }
+  return props.defaultSelectedId.toString(10)
+})
 
 const groupedOracles = computed(() => {
   return props.oracles.reduce((acc, obj) => {
@@ -82,7 +108,8 @@ const groupedOracles = computed(() => {
 })
 
 function onSelect(index: string) {
-  emit('select', BigInt(index))
+  const [id, view] = index.split('+')
+  emit('select', { oracleId: BigInt(id), view })
 }
 </script>
 

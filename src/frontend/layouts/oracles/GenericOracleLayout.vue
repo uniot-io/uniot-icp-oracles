@@ -1,9 +1,5 @@
 <template>
-  <el-container
-    class="full-height un-main-inner"
-    v-loading="loading"
-    element-loading-text="Loading generic oracles..."
-  >
+  <el-container class="full-height un-main-inner" v-loading="loading" element-loading-text="Loading generic oracles...">
     <template v-if="currentView">
       <oracle-menu
         class="un-inner-left"
@@ -62,13 +58,13 @@ onMounted(async () => {
   loading.value = false
 })
 
-async function onSelectOracle(oracle: bigint) {
-  if (oracle === createId) {
+async function onSelectOracle({ oracleId }: { oracleId: bigint }) {
+  if (oracleId === createId) {
     currentView.value = 'create'
     currentOracleId.value = createId
   } else {
     currentView.value = 'oracle'
-    currentOracleId.value = oracle
+    currentOracleId.value = oracleId
   }
 }
 
