@@ -7,8 +7,8 @@
     style="border: none"
   >
     <el-button type="primary" :icon="CirclePlus" @click="createDeviceOracle">Create Oracle</el-button>
-    <el-button type="primary" :icon="RefreshLeft" @click="syncDeviceOracleData">Sync Oracle</el-button>
-    <el-row :gutter="20" style="margin-top: 20px;">
+    <!-- <el-button type="primary" :icon="RefreshLeft" @click="syncDeviceOracleData">Sync Oracle</el-button> -->
+    <el-row :gutter="20" style="margin-top: 20px">
       <el-col :span="12">
         <el-input disabled v-model="statusParsed" autosize type="textarea" placeholder="Device Status" />
       </el-col>
@@ -37,7 +37,13 @@ interface UniotOracleDeviceViewProps {
   device: UniotDevice
 }
 
+type UniotDeviceEmits = {
+  (e: 'created', item: { oracleId: bigint; device: UniotDevice }): void
+}
+
 const props = defineProps<UniotOracleDeviceViewProps>()
+const emit = defineEmits<UniotDeviceEmits>()
+
 const icpClient = useIcpClientStore()
 const mqttClient = useMqttStore()
 const uniotClient = useUniotStore()
@@ -114,6 +120,7 @@ async function createDeviceOracle() {
   try {
     const newOracleId = await icpClient.actor?.createOracle(props.device.name, OracleTemplate.uniotDevice)
     await icpClient.actor?.subscribe(newOracleId!, topics)
+    emit('created', { oracleId: newOracleId!, device: props.device })
   } catch (error) {
     console.error(error)
   }

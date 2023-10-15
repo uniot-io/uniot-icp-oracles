@@ -10,13 +10,20 @@
       @select="onSelectOracle"
       style="padding-top: 10px"
     />
-    <generic-oracle-topics-view class="un-inner-right" v-if="isCurrentOracleExisted" :oracleId="currentOracleId" />
+    <!-- <el-main v-if="isCurrentOracleExisted" class="un-inner-right" style="overflow: hidden; padding: 0px; background-color: aquamarine">
+      <el-menu mode="horizontal">
+        <el-menu-item index="1">Generic View</el-menu-item>
+        <el-menu-item index="2">Device View</el-menu-item>
+      </el-menu>
+      <generic-oracle-topics-view :oracleId="currentOracleId" />
+    </el-main> -->
+    <generic-oracle-topics-view v-if="isCurrentOracleExisted" :oracleId="currentOracleId" />
     <uniot-oracle-device-view
       class="un-inner-right"
-      v-else
-      v-if="!loading && suggestedOracles.length"
+      v-else-if="suggestedOracles.length"
       :device-id="currentOracleId"
       :device="uniotDevices.get(currentOracleId)!"
+      @created="onOracleCreated"
     />
     <el-main class="un-empty-inner" v-if="!(existingOracles.length || suggestedOracles.length)">
       <el-empty description="Unfortunately, we were unable to obtain a list of your Uniot devices.">
@@ -117,6 +124,18 @@ function onDeviceMessage(topic: string, message: Buffer, packet: IPublishPacket)
       currentOracleId.value = intDeviceId
     }
   }
+}
+
+async function onOracleCreated({ oracleId, device }: { oracleId: bigint; device: UniotDevice }) {
+  existingOracles.value.push({
+    id: oracleId,
+    name: device.name,
+    template: OracleTemplate.uniotDevice
+  })
+  currentOracleId.value = oracleId
+
+  const intDeviceId = calcDeviceId(device.name)
+  uniotDevices.value.delete(intDeviceId)
 }
 
 async function onSelectOracle(oracle: bigint) {
