@@ -11,16 +11,16 @@
       >
         <el-scrollbar>
           <el-menu-item class="un-menu-item" index="/generic-oracle">
-            <el-icon class="un-menu-icon"><document /></el-icon>
+            <i class="el-icon icon-doc-text-inv un-menu-icon"></i>
             <span class="un-menu-label">Generic IoT Oracle</span>
           </el-menu-item>
           <el-menu-item class="un-menu-item" index="/uniot-oracle">
-            <el-icon class="un-menu-icon"><memo /></el-icon>
+            <i class="el-icon icon-uniot un-menu-icon"></i>
             <span class="un-menu-label">Uniot Device Oracle</span>
           </el-menu-item>
-          <el-menu-item class="un-menu-item" index="/other-oracle">
-            <el-icon class="un-menu-icon"><more /></el-icon>
-            <span class="un-menu-label">Other IoT Oracle</span>
+          <el-menu-item class="un-menu-item" index="/custom-oracle">
+            <i class="el-icon icon-star un-menu-icon"></i>
+            <span class="un-menu-label">Custom Integration</span>
           </el-menu-item>
         </el-scrollbar>
       </el-menu>
@@ -46,7 +46,6 @@
 import logo from '@/assets/logo.svg'
 import { onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { Document, Memo, More } from '@element-plus/icons-vue'
 import { useIcpClientStore } from '@/store/IcpClient'
 import { useUniotStore } from '@/store/UniotStore'
 
@@ -101,7 +100,7 @@ onUnmounted(() => {
       }
 
       .un-menu-icon {
-        font-size: 2rem;
+        font-size: 1.4rem;
       }
 
       .un-menu-label {
