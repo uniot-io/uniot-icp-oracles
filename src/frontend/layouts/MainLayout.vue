@@ -67,6 +67,7 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 .un-drawer {
   background-color: var(--el-color-white);
+  border-right: 1px solid var(--uniot-color-dividers);
   width: 18rem;
   display: flex;
   flex-direction: column;

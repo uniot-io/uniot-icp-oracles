@@ -7,6 +7,16 @@ export const OracleTemplate = {
   uniotDevice: 'uniot_device' as OracleTemplateType
 }
 
+export const OracleTemplateNames = {
+  [OracleTemplate.generic]: 'Generic',
+  [OracleTemplate.uniotDevice]: 'Uniot Device'
+}
+
+export const getOracleTemplateName = (template: string): string => {
+  const knownTemplateName = OracleTemplateNames[template]
+  return knownTemplateName || template
+}
+
 export interface OracleTopic {
   topic: string
   msgType: MqttMessageType

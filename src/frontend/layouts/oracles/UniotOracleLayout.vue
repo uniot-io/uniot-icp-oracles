@@ -1,22 +1,31 @@
 <template>
-  <el-container class="full-height" v-loading="loading" element-loading-text="Loading Uniot devices...">
+  <el-container class="full-height un-main-inner" v-loading="loading" element-loading-text="Loading Uniot devices...">
     <oracle-menu
+      class="un-inner-left"
       v-if="existingOracles.length || suggestedOracles.length"
       :with-create-item="false"
       :default-selected-id="currentOracleId"
       :oracles="existingOracles"
       :suggested="suggestedOracles"
       @select="onSelectOracle"
+      style="padding-top: 10px"
     />
-    <generic-oracle-topics-view v-if="isCurrentOracleExisted" :oracleId="currentOracleId" />
+    <generic-oracle-topics-view class="un-inner-right" v-if="isCurrentOracleExisted" :oracleId="currentOracleId" />
     <uniot-oracle-device-view
+      class="un-inner-right"
       v-else
       v-if="!loading && suggestedOracles.length"
       :device-id="currentOracleId"
       :device="uniotDevices.get(currentOracleId)!"
     />
-    <el-main v-if="!suggestedOracles.length">
-      <el-empty />
+    <el-main class="un-empty-inner" v-if="!(existingOracles.length || suggestedOracles.length)">
+      <el-empty description="Unfortunately, we were unable to obtain a list of your Uniot devices.">
+        <el-text>
+          Please make sure you are authorized on the Uniot Platform with your
+          <br />
+          Internet Identity and have at least one active device.
+        </el-text>
+      </el-empty>
     </el-main>
   </el-container>
 </template>
@@ -30,29 +39,28 @@ import { useIcpClientStore } from '@/store/IcpClient'
 import { useMqttStore } from '@/store/MqttStore'
 import { useUniotStore } from '@/store/UniotStore'
 import { deviceStatusTopic, defaultDomain, parseDeviceTopic } from '@/utils/mqttTopics'
-import { OracleDto } from '@/../declarations/oracles_backend/oracles_backend.did'
 import OracleMenu, { OracleMenuItem } from '@/components/oracle/OracleMenu.vue'
 import UniotOracleDeviceView from '@/views/oracle/UniotOracleDeviceView.vue'
 import GenericOracleTopicsView from '@/views/oracle/GenericOracleTopicsView.vue'
 import { UniotDevice } from '@/types/uniot'
 import { OracleTemplate } from '@/types/oracle'
-import { ca } from 'element-plus/es/locale'
 
+const ZERO_ORACLE_ID = -1n
 const icpClient = useIcpClientStore()
 const mqttClient = useMqttStore()
 const uniotClient = useUniotStore()
 
 const loading = ref(true)
 const uniotDevices = ref<Map<bigint, UniotDevice>>(new Map())
-const uniotOracles = ref<Array<OracleDto>>([])
 const deviceStatusWildTopic = computed(() => deviceStatusTopic(defaultDomain, uniotClient.userId, '+'))
 
-const currentOracleId = ref(0n)
+const currentOracleId = ref(ZERO_ORACLE_ID)
 const existingOracles = ref<Array<OracleMenuItem>>([])
 const suggestedOracles = computed((): OracleMenuItem[] => {
   return Array.from(uniotDevices.value.values(), (device) => ({
     id: calcDeviceId(device.name),
-    name: device.name
+    name: device.name,
+    template: OracleTemplate.uniotDevice
   }))
 })
 
@@ -80,8 +88,8 @@ async function loadUserOracles() {
   if (currentUser.oracles?.length) {
     existingOracles.value = currentUser.oracles
       .filter(({ template }) => template === OracleTemplate.uniotDevice)
-      .map(({ id, name }) => ({ id, name }))
-    if (currentOracleId.value === 0n && existingOracles.value.length) {
+      .map(({ id, name, template }) => ({ id, name, template }))
+    if (currentOracleId.value === ZERO_ORACLE_ID && existingOracles.value.length) {
       currentOracleId.value = existingOracles.value[0].id
     }
   }
@@ -99,9 +107,13 @@ async function subscribeDeviceTopic() {
 function onDeviceMessage(topic: string, message: Buffer, packet: IPublishPacket) {
   if (packet.retain) {
     const { deviceId } = parseDeviceTopic(topic)
+    if (existingOracles.value.some(({ name }) => name === deviceId)) {
+      return
+    }
+
     const intDeviceId = calcDeviceId(deviceId)
     uniotDevices.value.set(intDeviceId, { name: deviceId, data: CBOR.decode(message) })
-    if (currentOracleId.value === 0n) {
+    if (currentOracleId.value === ZERO_ORACLE_ID) {
       currentOracleId.value = intDeviceId
     }
   }

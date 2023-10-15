@@ -1,16 +1,32 @@
 <template>
-  <el-container class="full-height" v-loading="loading" element-loading-text="Loading generic oracles...">
-    <oracle-menu
-      with-create-item
-      :oracles="oracles"
-      :create-id="createId"
-      :default-selected-id="currentOracleId"
-      @select="onSelectOracle"
-    />
-    <generic-oracle-create-view v-if="currentView === 'create'" @submit="onCreateOrUpdateOracle" />
-    <generic-oracle-topics-view v-else-if="currentView === 'oracle'" :oracleId="currentOracleId" />
-    <el-main v-else>
-      <el-empty />
+  <el-container
+    class="full-height un-main-inner"
+    v-loading="loading"
+    element-loading-text="Loading generic oracles..."
+  >
+    <template v-if="currentView">
+      <oracle-menu
+        class="un-inner-left"
+        with-create-item
+        :oracles="oracles"
+        :create-id="createId"
+        :default-selected-id="currentOracleId"
+        :grouping="true"
+        @select="onSelectOracle"
+      />
+      <generic-oracle-create-view
+        class="un-inner-right"
+        v-if="currentView === 'create'"
+        @submit="onCreateOrUpdateOracle"
+      />
+      <generic-oracle-topics-view
+        class="un-inner-right"
+        v-else-if="currentView === 'oracle'"
+        :oracleId="currentOracleId"
+      />
+    </template>
+    <el-main class="un-empty-inner" v-else>
+      <el-empty description="You have not created any IoT Oracles yet." />
     </el-main>
   </el-container>
 </template>
@@ -36,7 +52,7 @@ onMounted(async () => {
   loading.value = true
   const currentUser = await icpClient.currentUser()
   if (currentUser.oracles?.length) {
-    oracles.value = currentUser.oracles.map(({ id, name }) => ({ id, name }))
+    oracles.value = currentUser.oracles.map(({ id, name, template }) => ({ id, name, template }))
     currentView.value = 'oracle'
     currentOracleId.value = currentUser.oracles[0].id
   } else {
@@ -62,7 +78,7 @@ async function onCreateOrUpdateOracle(oracle: OracleSettings) {
     const newOracleId = await icpClient.actor?.createOracle(oracle.name, oracle.template)
     await icpClient.actor?.subscribe(newOracleId!, oracle.topics)
     const currentUser = await icpClient.currentUser()
-    oracles.value = currentUser.oracles.map(({ id, name }) => ({ id, name }))
+    oracles.value = currentUser.oracles.map(({ id, name, template }) => ({ id, name, template }))
     currentView.value = 'oracle'
     currentOracleId.value = newOracleId!
   } catch (error) {

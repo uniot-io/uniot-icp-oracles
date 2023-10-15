@@ -1,12 +1,42 @@
-@use "@/assets/scss/uniot/theme" as *;
-@use "element-plus/theme-chalk/src/index" as *;
-@use "uniot/fonts";
-@use "uniot/var";
-@use "uniot/utility";
+@use '@/assets/scss/uniot/theme' as *;
+@use 'element-plus/theme-chalk/src/index' as *;
+@use 'uniot/fonts';
+@use 'uniot/var';
+@use 'uniot/utility';
 
 body {
   margin: 0;
   font-family: 'IBM Plex Sans', sans-serif;
   font-weight: 500;
-  background-color: var(--el-fill-color);
+  background-color: var(--uniot-color-background-dark);
+}
+
+.flex-card-container {
+  display: flex;
+  flex-direction: column;
+  height: 95%;
+}
+
+.el-loading-mask {
+  border-radius: 10px !important;
+}
+
+.un-main-inner {
+  border: 1px solid var(--uniot-color-dividers);
+  border-radius: 10px;
+}
+
+.un-empty-inner {
+  background-color: var(--el-color-white);
+  border-radius: 10px;
+}
+
+.un-inner-left {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+.un-inner-right {
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
 }

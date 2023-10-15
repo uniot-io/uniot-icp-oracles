@@ -2,6 +2,7 @@ import 'regenerator-runtime/runtime'
 import Ws from '@adonisjs/websocket-client'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { ca } from 'element-plus/es/locale'
 
 interface WsConnection {
   subscribe: (topic: string) => any
@@ -25,8 +26,12 @@ export const useUniotStore = defineStore('uniotStore', () => {
   }
 
   function disconnect(): void {
-    if (wsConnection.value) {
-      wsConnection.value.close()
+    try {
+      if (wsConnection.value && wsConnection.value.ws) {
+        wsConnection.value.close()
+      }
+    } catch (_) {
+      console.warn('Failed to close WebSocket connection')
     }
   }
 
