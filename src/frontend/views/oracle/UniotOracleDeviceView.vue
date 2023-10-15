@@ -6,31 +6,38 @@
     shadow="never"
     style="border: none"
   >
-    <el-button type="primary" :icon="CirclePlus" @click="createDeviceOracle">Create Oracle</el-button>
-    <!-- <el-button type="primary" :icon="RefreshLeft" @click="syncDeviceOracleData">Sync Oracle</el-button> -->
-    <el-row :gutter="20" style="margin-top: 20px">
-      <el-col :span="12">
-        <el-input disabled v-model="statusParsed" autosize type="textarea" placeholder="Device Status" />
-      </el-col>
-      <el-col :span="12">
-        <el-input disabled v-model="scriptParsed" autosize type="textarea" placeholder="Device Script" />
-      </el-col>
-    </el-row>
+    <template #header>
+      <el-row :gutter="20">
+        <el-col :span="24" style="margin-bottom: 20px">
+          <el-button type="primary" :icon="CirclePlus" @click="createDeviceOracle">Create Oracle</el-button>
+        </el-col>
+        <el-col :span="6">
+          <span>Device Status:&nbsp;</span>
+          <el-tag v-if="device.data.online" type="success">Online</el-tag>
+          <el-tag v-else type="danger">Offline</el-tag>
+        </el-col>
+        <el-col :span="18">
+          <span>Last message:&nbsp;</span>
+          <el-tag type="info">{{ new Date(device.data.timestamp * 1_000).toISOString() }}</el-tag>
+        </el-col>
+      </el-row>
+    </template>
+    <highlightjs language="lisp" :code="formattedScript" />
   </el-card>
 </template>
 
 <script setup lang="ts">
 import * as CBOR from 'cbor-web'
 import { watch, ref, onUnmounted, computed, onMounted } from 'vue'
-import { CirclePlus, RefreshLeft } from '@element-plus/icons-vue'
+import { CirclePlus } from '@element-plus/icons-vue'
+import { IPublishPacket } from 'mqtt-packet'
 import { useIcpClientStore } from '@/store/IcpClient'
 import { useMqttStore } from '@/store/MqttStore'
 import { useUniotStore } from '@/store/UniotStore'
 import { deviceScriptTopic, defaultDomain, deviceStatusTopic } from '@/utils/mqttTopics'
+import { beautify } from '@/utils/lisp'
 import { UniotDevice } from '@/types/uniot'
 import { OracleTemplate } from '@/types/oracle'
-import { IPublishPacket } from 'mqtt/*'
-import { on } from 'events'
 
 interface UniotOracleDeviceViewProps {
   deviceId: bigint
@@ -51,6 +58,7 @@ const loading = ref(false)
 
 const statusParsed = ref('')
 const scriptParsed = ref('')
+const formattedScript = ref('')
 
 const statusTopic = computed(() => deviceStatusTopic(defaultDomain, uniotClient.userId, props.device.name))
 const scriptTopic = computed(() => deviceScriptTopic(defaultDomain, uniotClient.userId, props.device.name))
@@ -111,6 +119,7 @@ function onScriptMessage(topic: string, message: Buffer, packet: IPublishPacket)
   if (packet.retain) {
     const script = CBOR.decode(message)
     scriptParsed.value = JSON.stringify(script, null, 2)
+    formattedScript.value = beautify(script.code)
   }
 }
 
@@ -126,8 +135,11 @@ async function createDeviceOracle() {
   }
   loading.value = false
 }
-
-async function syncDeviceOracleData() {
-  return
-}
 </script>
+
+<style lang="scss">
+// can't be scoped
+.hljs {
+  max-height: 75vh;
+}
+</style>

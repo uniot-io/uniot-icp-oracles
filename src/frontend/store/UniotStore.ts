@@ -2,7 +2,6 @@ import 'regenerator-runtime/runtime'
 import Ws from '@adonisjs/websocket-client'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { ca } from 'element-plus/es/locale'
 
 interface WsConnection {
   subscribe: (topic: string) => any
