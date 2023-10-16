@@ -8,21 +8,23 @@
   >
     <template #header>
       <el-row :gutter="20">
-        <el-col :span="24" style="margin-bottom: 20px">
+        <el-col v-if="createOracle" :span="24" style="margin-bottom: 20px">
           <el-button type="primary" :icon="CirclePlus" @click="createDeviceOracle">Create Oracle</el-button>
         </el-col>
         <el-col :span="6">
           <span>Device Status:&nbsp;</span>
-          <el-tag v-if="device.data.online" type="success">Online</el-tag>
+          <el-tag v-if="statusOnline" type="success">Online</el-tag>
           <el-tag v-else type="danger">Offline</el-tag>
         </el-col>
         <el-col :span="18">
-          <span>Last message:&nbsp;</span>
-          <el-tag type="info">{{ new Date(device.data.timestamp * 1_000).toISOString() }}</el-tag>
+          <span>Last Seen:&nbsp;</span>
+          <el-tag type="info">{{ statusTimestamp }}</el-tag>
         </el-col>
       </el-row>
     </template>
-    <highlightjs language="lisp" :code="formattedScript" />
+    <div class="code-frame" :data-label="runtimeLabel">
+      <highlightjs language="lisp" :code="formattedScript" />
+    </div>
   </el-card>
 </template>
 
@@ -38,10 +40,12 @@ import { deviceScriptTopic, defaultDomain, deviceStatusTopic } from '@/utils/mqt
 import { beautify } from '@/utils/lisp'
 import { UniotDevice } from '@/types/uniot'
 import { OracleTemplate } from '@/types/oracle'
+import { initLineNumbersOnLoad } from '@/utils/highlightjs-line-numbers'
 
 interface UniotOracleDeviceViewProps {
   deviceId: bigint
   device: UniotDevice
+  createOracle: boolean
 }
 
 type UniotDeviceEmits = {
@@ -57,8 +61,12 @@ const uniotClient = useUniotStore()
 const loading = ref(false)
 
 const statusParsed = ref('')
+const statusOnline = ref(false)
+const statusTimestamp = ref(Date.now().toLocaleString())
+
 const scriptParsed = ref('')
-const formattedScript = ref('')
+const formattedScript = ref(' ; no script code is available')
+const runtimeLabel = ref('Lisp')
 
 const statusTopic = computed(() => deviceStatusTopic(defaultDomain, uniotClient.userId, props.device.name))
 const scriptTopic = computed(() => deviceScriptTopic(defaultDomain, uniotClient.userId, props.device.name))
@@ -92,6 +100,13 @@ onUnmounted(async () => {
   await mqttClient.unsubscribe(scriptTopic.value)
 })
 
+function setFormatedScript(script: string) {
+  formattedScript.value = beautify(script)
+  setTimeout(() => {
+    initLineNumbersOnLoad()
+  }, 10)
+}
+
 async function subscribeDeviceTopics() {
   try {
     await mqttClient.subscribe(statusTopic.value, onStatusMessage)
@@ -111,6 +126,8 @@ function onStatusMessage(topic: string, message: Buffer, packet: IPublishPacket)
   if (packet.retain) {
     const status = CBOR.decode(message)
     statusParsed.value = JSON.stringify(status, null, 2)
+    statusOnline.value = status.online
+    statusTimestamp.value = new Date(status.timestamp * 1_000).toLocaleString()
   }
 }
 
@@ -119,7 +136,8 @@ function onScriptMessage(topic: string, message: Buffer, packet: IPublishPacket)
   if (packet.retain) {
     const script = CBOR.decode(message)
     scriptParsed.value = JSON.stringify(script, null, 2)
-    formattedScript.value = beautify(script.code)
+    runtimeLabel.value = `${script.runtime}: ${script.version}`
+    setFormatedScript(script.code)
   }
 }
 
@@ -140,6 +158,33 @@ async function createDeviceOracle() {
 <style lang="scss">
 // can't be scoped
 .hljs {
-  max-height: 75vh;
+  max-height: 55vh;
+  background: var(--uniot-color-background-dark) !important;
+  padding: 0 !important;
+  padding-left: 10px !important;
+}
+
+.hljs-ln-numbers {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+
+  text-align: center;
+  color: #b4b8cb;
+  border-right: 1px solid #b4b8cb;
+  vertical-align: top;
+  margin-right: 5px;
+}
+
+.hljs-ln td {
+  padding-right: 5px !important;
+  padding-left: 10px !important;
+}
+
+.hljs-ln-code {
+  padding-left: 10px;
 }
 </style>

@@ -8,9 +8,10 @@ import lisp from 'highlight.js/lib/languages/lisp'
 import hljsVuePlugin from '@highlightjs/vue-plugin'
 import App from '@/App.vue'
 import router from './router'
+hljs.registerLanguage('lisp', lisp)
 
 import '@/assets/scss/index.scss'
-hljs.registerLanguage('lisp', lisp)
+import 'highlight.js/styles/base16/github.css'
 
 const app = createApp(App)
 

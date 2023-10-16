@@ -1,0 +1,60 @@
+.code-frame {
+    position: relative;
+    margin-top: 1em;
+    padding: 1px;
+    border: 1px solid var(--uniot-color-dividers);
+    background-color: var(--uniot-color-background-dark);
+    border-radius: 4px;
+    display: block
+}
+
+.code-frame--dark {
+    background-color: #262626;
+    color: #ffffffd9
+}
+
+.code-frame__original {
+    display: none
+}
+
+.code-frame__content {
+    white-space: pre-wrap;
+    word-break: break-word
+}
+
+.code-frame__copy {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    border: none;
+    background: none;
+    color: inherit;
+    cursor: pointer
+}
+
+.code-frame #clipboard-textarea {
+    position: absolute;
+    z-index: -100;
+    opacity: 0
+}
+
+.code-frame[data-label] {
+    margin-top: 1em
+}
+
+.code-frame[data-label]:before {
+    content: attr(data-label);
+    position: absolute;
+    bottom: 100%;
+    right: 1em;
+    padding: .1em .7em 0;
+    background-color: inherit;
+    border: 1px solid rgba(0, 0, 0, .06);
+    border-bottom: 1px solid #f9f9f9;
+    border-radius: 3px 3px 0 0;
+    font-size: 11px
+}
+
+.code-frame--dark[data-label]:before {
+    border-bottom-color: #262626
+}

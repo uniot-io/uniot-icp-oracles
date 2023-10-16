@@ -18,6 +18,7 @@
         class="un-inner-right"
         :device-id="currentDeviceId"
         :device="uniotDevices.get(currentDeviceId)!"
+        :create-oracle="false"
         @created="onOracleCreated"
       />
     </template>
@@ -26,6 +27,7 @@
       v-else-if="suggestedOracles.length"
       :device-id="currentOracleId"
       :device="uniotDevices.get(currentOracleId)!"
+      :create-oracle="true"
       @created="onOracleCreated"
     />
     <el-main class="un-empty-inner" v-if="!(existingOracles.size || suggestedOracles.length)">
@@ -54,7 +56,6 @@ import UniotOracleDeviceView from '@/views/oracle/UniotOracleDeviceView.vue'
 import GenericOracleTopicsView from '@/views/oracle/GenericOracleTopicsView.vue'
 import { UniotDevice } from '@/types/uniot'
 import { OracleTemplate } from '@/types/oracle'
-import { fi } from 'element-plus/es/locale'
 
 const ZERO_ORACLE_ID = -1n
 const icpClient = useIcpClientStore()
