@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import * as mqtt from 'mqtt/dist/mqtt.min'
+import mqttMatch from 'mqtt-match'
 import { IPublishPacket } from 'mqtt-packet'
 import { Buffer } from 'buffer'
 
@@ -57,9 +58,6 @@ export const useMqttStore = defineStore('mqttStore', () => {
 
   async function subscribe(topic: string, callback: MqttMessageCallback) {
     await connect()
-    if (topic.search(/[+#]/) !== -1) {
-      throw new Error(`can't subscribe to wildcard topic: ${topic}`)
-    }
     if (!subscriptions.has(topic)) {
       await client.value?.subscribeAsync(topic)
       subscriptions.set(topic, callback)
@@ -88,11 +86,11 @@ export const useMqttStore = defineStore('mqttStore', () => {
   }
 
   function _onMessage(topic: string, message: Buffer, packet: IPublishPacket) {
-    const callback = subscriptions.get(topic)
-    if (!callback) {
-      return
+    for (const [subTopic, callback] of subscriptions) {
+      if (mqttMatch(subTopic, topic)) {
+        callback(topic, message, packet)
+      }
     }
-    callback(topic, message, packet)
   }
 
   function _onError(error: Error) {

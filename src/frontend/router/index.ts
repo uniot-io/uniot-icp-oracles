@@ -2,9 +2,10 @@ import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import { useIcpClientStore } from '@/store/IcpClient'
 import MainLayout from '@/layouts/MainLayout.vue'
 import GenericOracleLayout from '@/layouts/oracles/GenericOracleLayout.vue'
+import UniotOracleLayout from '@/layouts/oracles/UniotOracleLayout.vue'
+import CustomOracleLayout from '@/layouts/oracles/CustomOracleLayout.vue'
 import LoginView from '@/views/LoginView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
-import EmptyView from '@/views/EmptyView.vue'
 
 // legacy views
 import LegacyLayout from '@/layouts/LegacyLayout.vue'
@@ -22,8 +23,8 @@ const routes: RouteRecordRaw[] = [
     redirect: 'generic-oracle',
     children: [
       { path: 'generic-oracle', component: GenericOracleLayout },
-      { path: 'uniot-oracle', component: EmptyView },
-      { path: 'other-oracle', component: EmptyView }
+      { path: 'uniot-oracle', component: UniotOracleLayout },
+      { path: 'custom-oracle', component: CustomOracleLayout }
     ],
     beforeEnter: () => {
       if (!useIcpClientStore().isAuthenticated) {
@@ -53,7 +54,7 @@ const routes: RouteRecordRaw[] = [
 
 const router = createRouter({
   history: createWebHistory(),
-  routes: routes
+  routes
 })
 
 export default router

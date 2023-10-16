@@ -2,7 +2,7 @@
   <el-container style="height: 100vh">
     <div class="un-login-container">
       <el-image class="un-login-logo" :src="logo" fit="scale-down" />
-      <el-button type="primary" size="large" @click="login()">Login</el-button>
+      <el-button type="primary" size="large" @click="login()">Sign in with Internet Identity</el-button>
       <el-alert class="un-login-error" v-if="error" title="Something went wrong..." type="error">
         {{ errorMessage }}
       </el-alert>

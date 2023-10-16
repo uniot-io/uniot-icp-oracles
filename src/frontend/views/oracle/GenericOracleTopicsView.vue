@@ -2,21 +2,76 @@
   <el-card
     class="full-width full-height"
     v-loading="loading"
-    element-loading-text="Subscribing..."
+    element-loading-text="Synchronizing..."
     shadow="never"
     style="border: none"
+    body-class="flex-card-container"
   >
-    <el-button type="primary" :icon="RefreshLeft" @click="syncOracleData">Sync Oracle</el-button>
-    <el-table :data="tableRowsData" default-expand-all row-key="id">
-      <el-table-column label="Date" prop="date" width="250" />
-      <el-table-column label="Topic" prop="topic" width="250" />
-      <el-table-column label="Message" prop="message" min-width="500" />
-      <el-table-column label="Status" prop="status" width="150">
+    <el-button type="primary" :icon="RefreshLeft" @click="syncOracleData" style="align-self: flex-start">
+      Sync Oracle
+    </el-button>
+    <el-table
+      :data="tableRowsData"
+      :row-class-name="tableRowClassName"
+      default-expand-all
+      row-key="id"
+      style="flex: 1; overflow-y: auto"
+      :indent="0"
+    >
+      <el-table-column width="23" />
+      <el-table-column label="Topic" prop="topic" width="280">
         <template #default="scope">
-          <el-tag :type="statusTagType(scope.row.status)">{{ scope.row.status }}</el-tag>
+          <template v-if="scope.row.topic">
+            <el-text
+              v-if="scope.row.showFullMessage || scope.row.topic.length <= 30"
+              :size="scope.row.topic.length > 30 ? 'small' : 'default'"
+            >
+              {{ scope.row.topic }}
+            </el-text>
+            <template v-else>
+              <el-tooltip class="box-item" effect="dark" :content="scope.row.topic" placement="top">
+                <el-text>
+                  {{ `${scope.row.topic.slice(0, 30)}...` }}
+                </el-text>
+              </el-tooltip>
+            </template>
+          </template>
+          <el-tag v-else type="success">MQTT</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="Security" prop="security" width="150">
+      <el-table-column label="Message" prop="message" min-width="500">
+        <template #default="scope">
+          <el-text
+            v-if="scope.row.showFullMessage || scope.row.message.length <= 82"
+            :size="scope.row.message.length > 82 ? 'small' : 'default'"
+            style="white-space: pre"
+          >
+            {{ scope.row.message }}
+          </el-text>
+          <el-text v-else>
+            {{ `${scope.row.message.slice(0, 82)}...` }}
+          </el-text>
+        </template>
+      </el-table-column>
+      <el-table-column width="58">
+        <template #default="scope">
+          <el-button
+            circle
+            v-if="scope.row.message.length > 80"
+            @click="toggleMessageDisplay(scope.row)"
+            :icon="scope.row.showFullMessage ? ArrowUpBold : ArrowDownBold"
+            size="small"
+            style="margin-right: 10px"
+          />
+        </template>
+      </el-table-column>
+      <el-table-column label="Date" prop="date" width="200" />
+      <el-table-column label="Status" prop="status" width="120">
+        <template #default="scope">
+          <el-tag v-if="scope.row.status" :type="statusTagType(scope.row.status)">{{ scope.row.status }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="Security" prop="security" width="120">
         <template #default="scope">
           <el-tag :type="securityTagType(scope.row.security)">{{ scope.row.security }}</el-tag>
         </template>
@@ -27,21 +82,24 @@
 
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
-import { RefreshLeft } from '@element-plus/icons-vue'
+import { RefreshLeft, ArrowUpBold, ArrowDownBold } from '@element-plus/icons-vue'
 import { Buffer } from 'buffer'
 import { IPublishPacket } from 'mqtt-packet'
 import { MqttMessageSecurity, MqttMessageStatus, MqttMessageType } from '@/types/mqtt'
 import { useIcpClientStore } from '@/store/IcpClient'
 import { useMqttStore } from '@/store/MqttStore'
 import { OracleDto, SubscriptionDto } from '@/../declarations/oracles_backend/oracles_backend.did'
+import { decodeMessage } from '@/utils/msgDecoder'
 
 interface TableRowData {
   id: string
   date: string
-  topic: string
+  topic?: string
   message: string
-  status: string
+  status?: string
   security: string
+  showFullMessage: boolean
+  isChild?: boolean
 }
 
 interface GenericTableRowData extends TableRowData {
@@ -73,11 +131,12 @@ const tableRowsData = computed<GenericTableRowData[]>(() => {
   for (const [topic, data] of subTopicData.value.entries()) {
     const row: GenericTableRowData = {
       id: topic,
-      date: data.date.toISOString(),
+      date: data.date.toLocaleString(),
       topic: topic,
-      message: data.message.toString('utf-8'),
+      message: decodeMessage(data.message, data.msgType),
       status: data.status,
-      security: data.security
+      security: data.security,
+      showFullMessage: false
     }
     if (data.status === 'outdated') {
       const mqttData = mqttTopicData.value.get(topic)
@@ -85,11 +144,13 @@ const tableRowsData = computed<GenericTableRowData[]>(() => {
         row.children = [
           {
             id: `mqtt-${topic}`,
-            date: mqttData.date.toISOString(),
-            topic: topic,
-            message: mqttData.message.toString('utf-8'),
-            status: mqttData.status,
-            security: mqttData.security
+            date: mqttData.date.toLocaleString(),
+            // topic: topic,
+            message: decodeMessage(mqttData.message, mqttData.msgType),
+            // status: mqttData.status,
+            security: mqttData.security,
+            showFullMessage: false,
+            isChild: true
           }
         ]
       }
@@ -154,17 +215,24 @@ async function syncOracleData() {
 
 async function subscribeTopics() {
   for (const { topic } of subscriptions.value) {
-    await mqttClient
-      .subscribe(topic, onMqttTopicMessage)
-      .catch((error) => console.error(`failed to subscribe to topic: ${topic}, ${error}`))
+    if (topic.search(/[+#]/) !== -1) {
+      console.error(`can't subscribe to wildcard topic: ${topic}`)
+    }
+    try {
+      await mqttClient.subscribe(topic, onMqttTopicMessage)
+    } catch (error) {
+      console.error(`failed to subscribe to topic: ${topic}, ${error}`)
+    }
   }
 }
 
 async function unsubscribeTopics() {
   for (const { topic } of subscriptions.value) {
-    await mqttClient
-      .unsubscribe(topic)
-      .catch((error) => console.error(`failed to unsubscribe from topic: ${topic}, ${error}`))
+    try {
+      await mqttClient.unsubscribe(topic)
+    } catch (error) {
+      console.error(`failed to unsubscribe from topic: ${topic}, ${error}`)
+    }
   }
 }
 
@@ -187,6 +255,14 @@ function onMqttTopicMessage(topic: string, message: Buffer, packet: IPublishPack
   }
 }
 
+function toggleMessageDisplay(row: GenericTableRowData) {
+  row.showFullMessage = !row.showFullMessage
+}
+
+const tableRowClassName = ({ row }: { row: GenericTableRowData }) => {
+  return row.isChild ? 'child-row' : ''
+}
+
 function statusTagType(status: MqttMessageStatus) {
   switch (status) {
     case 'up-to-date':
@@ -207,3 +283,9 @@ function securityTagType(security: MqttMessageSecurity) {
   }
 }
 </script>
+
+<style>
+.el-table .child-row {
+  --el-table-tr-bg-color: var(--uniot-color-background-light);
+}
+</style>

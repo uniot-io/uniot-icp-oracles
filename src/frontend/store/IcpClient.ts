@@ -124,7 +124,7 @@ export const useIcpClientStore = defineStore('icpClientStore', () => {
 
   function _trimmedPrincipal(identity: Identity) {
     const principal = identity.getPrincipal().toString().split('-')
-    return principal ? `${principal[0]}-${principal[1]}...${principal[principal.length - 1]}` : ''
+    return principal ? `${principal[0]}- ... -${principal[principal.length - 1]}` : ''
   }
 
   return {

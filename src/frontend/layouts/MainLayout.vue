@@ -11,16 +11,16 @@
       >
         <el-scrollbar>
           <el-menu-item class="un-menu-item" index="/generic-oracle">
-            <el-icon class="un-menu-icon"><document /></el-icon>
+            <i class="el-icon icon-doc-text-inv un-menu-icon"></i>
             <span class="un-menu-label">Generic IoT Oracle</span>
           </el-menu-item>
           <el-menu-item class="un-menu-item" index="/uniot-oracle">
-            <el-icon class="un-menu-icon"><memo /></el-icon>
+            <i class="el-icon icon-uniot un-menu-icon"></i>
             <span class="un-menu-label">Uniot Device Oracle</span>
           </el-menu-item>
-          <el-menu-item class="un-menu-item" index="/other-oracle">
-            <el-icon class="un-menu-icon"><more /></el-icon>
-            <span class="un-menu-label">Other IoT Oracle</span>
+          <el-menu-item class="un-menu-item" index="/custom-oracle">
+            <i class="el-icon icon-star un-menu-icon"></i>
+            <span class="un-menu-label">Custom Integration</span>
           </el-menu-item>
         </el-scrollbar>
       </el-menu>
@@ -44,25 +44,29 @@
 
 <script setup lang="ts">
 import logo from '@/assets/logo.svg'
+import { onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { Document, Memo, More } from '@element-plus/icons-vue'
 import { useIcpClientStore } from '@/store/IcpClient'
-import { useAdonisWebSocket } from '@/composables/useAdonisWebSocket'
+import { useUniotStore } from '@/store/UniotStore'
 
 const route = useRoute()
 const icpClient = useIcpClientStore()
-const { wsConnect, wsConnection } = useAdonisWebSocket()
+const uniotClient = useUniotStore()
 
-const options = {
-  url: 'ws://localhost:8888', // TODO
-  path: 'wsrt'
-}
-wsConnect(options)
+onMounted(() => {
+  uniotClient.connect()
+  uniotClient.processIdentity(icpClient.principal.full)
+})
+
+onUnmounted(() => {
+  uniotClient.disconnect()
+})
 </script>
 
 <style lang="scss" scoped>
 .un-drawer {
   background-color: var(--el-color-white);
+  border-right: 1px solid var(--uniot-color-dividers);
   width: 18rem;
   display: flex;
   flex-direction: column;
@@ -96,7 +100,7 @@ wsConnect(options)
       }
 
       .un-menu-icon {
-        font-size: 2rem;
+        font-size: 1.4rem;
       }
 
       .un-menu-label {

@@ -1,8 +1,9 @@
 <template>
-  <el-card class="full-width" shadow="never" style="border: none">
+  <el-card class="full-width" shadow="never" style="border: none" body-class="flex-card-container">
+    <el-scrollbar style="padding-right: 20px;">
     <el-form ref="formRef" :model="form" label-position="top" v-loading="false" style="max-width: 800px">
-      <el-form-item label="Oracle name" :prop="'name'" :rules="rules.name">
-        <el-input v-model="form.name" />
+      <el-form-item label="Oracle Name" :prop="'name'" :rules="rules.name">
+        <el-input placeholder="My First IoT Oracle" v-model="form.name" />
       </el-form-item>
       <el-form-item
         v-for="(topic, index) in form.topics"
@@ -11,14 +12,9 @@
         :prop="`topics[${index}].topic`"
         :rules="rules.topics"
       >
-        <el-col :span="16">
-          <el-form-item>
-            <el-input class="full-width" v-model="topic.topic" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="4">
-          <el-form-item required>
-            <el-select class="full-width" v-model="topic.msgType" default-first-option>
+        <el-input v-model="topic.topic" placeholder="Example: home/living-room/temperature">
+          <template #prepend>
+            <el-select v-model="topic.msgType" style="width: 115px">
               <el-option
                 v-for="messageType in MqttMessageTypes"
                 :key="messageType"
@@ -26,26 +22,25 @@
                 :value="messageType"
               />
             </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :span="4">
-          <el-button class="full-width" @click.prevent="removeTopic(index)">Delete</el-button>
-        </el-col>
+          </template>
+          <template #append>
+            <el-button :disabled="form.topics.length <= 1" @click.prevent="removeTopic(index)">Delete</el-button>
+          </template>
+        </el-input>
       </el-form-item>
-      <el-form-item>
+      <el-row class="row-bg" justify="end">
         <el-button @click="addTopic">Add topic</el-button>
-      </el-form-item>
-      <el-form-item size="large">
         <el-button type="primary" @click="submit(formRef)">Create</el-button>
-      </el-form-item>
+      </el-row>
     </el-form>
+    </el-scrollbar>
   </el-card>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { FormRules, FormInstance } from 'element-plus'
-import { OracleSettings, OracleTopic } from '@/types/oracle'
+import { OracleSettings, OracleTemplate, OracleTopic } from '@/types/oracle'
 import { MqttMessageTypes } from '@/types/mqtt'
 
 type GenericOracleCreateViewEmits = {
@@ -61,14 +56,14 @@ const emit = defineEmits<GenericOracleCreateViewEmits>()
 const rules = reactive<FormRules<RuleForm>>({
   name: [{ required: true, message: 'Oracle name can not be empty', trigger: 'blur' }],
   topics: [
-    { required: true, message: 'Topic name can not be empty', trigger: 'blur' },
-    { pattern: /^[^#+]+$/, message: 'Topic name can not be wildcard', trigger: 'blur' }
+    { required: true, message: 'Topic can not be empty', trigger: 'blur' },
+    { pattern: /^[^#+]+$/, message: 'Topic can not be wildcard', trigger: 'blur' }
   ]
 })
 
 const form = reactive<OracleSettings>({
   name: '',
-  template: 'generic',
+  template: OracleTemplate.generic,
   topics: [{ topic: '', msgType: MqttMessageTypes[0] }]
 })
 const formRef = ref<FormInstance>()
@@ -82,9 +77,11 @@ function removeTopic(index: number) {
 }
 
 async function submit(formEl: FormInstance | undefined) {
-  formEl?.clearValidate()
-  if (await formEl?.validate()) {
-    await emit('submit', form)
-  }
+  try {
+    formEl?.clearValidate()
+    if (await formEl?.validate()) {
+      await emit('submit', form)
+    }
+  } catch (_) {}
 }
 </script>
