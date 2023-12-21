@@ -1,4 +1,5 @@
 import 'regenerator-runtime/runtime'
+// @ts-expect-error
 import Ws from '@adonisjs/websocket-client'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
@@ -26,6 +27,7 @@ export const useUniotStore = defineStore('uniotStore', () => {
 
   function disconnect(): void {
     try {
+      // @ts-expect-error
       if (wsConnection.value && wsConnection.value.ws) {
         wsConnection.value.close()
       }
