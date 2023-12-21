@@ -1,15 +1,20 @@
 <template>
   <el-card
-    class="full-width full-height"
+    class="full-width full-height uniot-oracle-device-view-card"
     v-loading="loading"
     element-loading-text="Loading device data..."
     shadow="never"
-    style="border: none"
   >
     <template #header>
       <el-row :gutter="20">
-        <el-col v-if="createOracle" :span="24" style="margin-bottom: 20px">
-          <el-button type="primary" :icon="CirclePlus" @click="createDeviceOracle">Create Oracle</el-button>
+        <el-col :span="24" style="margin-bottom: 20px">
+          <el-button v-if="createOracle" type="primary" :icon="CirclePlus" @click="createDeviceOracle">
+            Create Oracle
+          </el-button>
+          <el-button v-if="emulation" type="danger" :icon="RemoveFilled" @click="terminate">Terminate</el-button>
+          <el-button v-else type="success" :disabled="!scriptCode" :icon="CaretRight" @click="emulate">
+            Emulate
+          </el-button>
         </el-col>
         <el-col :span="6">
           <span>Device Status:&nbsp;</span>
@@ -22,25 +27,38 @@
         </el-col>
       </el-row>
     </template>
-    <div class="code-frame" :data-label="runtimeLabel">
-      <highlightjs language="lisp" :code="formattedScript" />
-    </div>
+    <el-row>
+      <el-col :span="12">
+        <emulator-view v-if="!loading" ref="EmulatorRef" v-model:log="log" :device="device" :script="scriptCode" />
+      </el-col>
+      <el-col :span="12">
+        <div class="code-frame" :data-label="runtimeLabel">
+          <highlightjs language="lisp" :code="formattedScript" />
+        </div>
+      </el-col>
+    </el-row>
+    <template #footer>
+      <div>
+        <highlightjs v-if="!loading" ref="LoggerRef" language="json" :code="log" />
+      </div>
+    </template>
   </el-card>
 </template>
 
 <script setup lang="ts">
 import * as CBOR from 'cbor-web'
-import { watch, ref, onUnmounted, computed, onMounted } from 'vue'
-import { CirclePlus } from '@element-plus/icons-vue'
+import { watch, ref, onUnmounted, computed, onMounted, nextTick } from 'vue'
+import { CirclePlus, CaretRight, RemoveFilled } from '@element-plus/icons-vue'
 import { IPublishPacket } from 'mqtt-packet'
 import { useIcpClientStore } from '@/store/IcpClient'
 import { useMqttStore } from '@/store/MqttStore'
 import { useUniotStore } from '@/store/UniotStore'
 import { deviceScriptTopic, defaultDomain, deviceStatusTopic } from '@/utils/mqttTopics'
-import { beautify } from '@/utils/lisp'
+import { beautify } from '@/utils/lisp/format'
 import { UniotDevice } from '@/types/uniot'
 import { OracleTemplate } from '@/types/oracle'
 import { initLineNumbersOnLoad } from '@/utils/highlightjs-line-numbers'
+import EmulatorView from '@/components/emulator/EmulatorView.vue'
 
 interface UniotOracleDeviceViewProps {
   deviceId: bigint
@@ -65,8 +83,14 @@ const statusOnline = ref(false)
 const statusTimestamp = ref(Date.now().toLocaleString())
 
 const scriptParsed = ref('')
+const scriptCode = ref('')
 const formattedScript = ref(' ; no script code is available')
 const runtimeLabel = ref('Lisp')
+
+const log = ref('')
+const emulation = ref(false)
+const EmulatorRef = ref()
+const LoggerRef = ref()
 
 const statusTopic = computed(() => deviceStatusTopic(defaultDomain, uniotClient.userId, props.device.name))
 const scriptTopic = computed(() => deviceScriptTopic(defaultDomain, uniotClient.userId, props.device.name))
@@ -85,6 +109,16 @@ watch(
   { immediate: true }
 )
 
+watch(
+  log,
+  () => {
+    const logsContainer = document.querySelector('.uniot-oracle-device-view-card .el-card__footer')
+    const logsCode = logsContainer?.getElementsByClassName('hljs')[0]
+    logsCode!.scrollTop = logsCode!.scrollHeight
+  },
+  { flush: 'post' }
+)
+
 onMounted(async () => {
   loading.value = true
   // workaround: wait while all topics will be unsubscribed
@@ -100,11 +134,10 @@ onUnmounted(async () => {
   await mqttClient.unsubscribe(scriptTopic.value)
 })
 
-function setFormatedScript(script: string) {
+async function setFormatedScript(script: string) {
   formattedScript.value = beautify(script)
-  setTimeout(() => {
-    initLineNumbersOnLoad()
-  }, 10)
+  await nextTick()
+  initLineNumbersOnLoad()
 }
 
 async function subscribeDeviceTopics() {
@@ -122,7 +155,6 @@ async function subscribeDeviceTopics() {
 }
 
 function onStatusMessage(topic: string, message: Buffer, packet: IPublishPacket) {
-  console.log('onStatusMessage')
   if (packet.retain) {
     const status = CBOR.decode(message)
     statusParsed.value = JSON.stringify(status, null, 2)
@@ -132,10 +164,10 @@ function onStatusMessage(topic: string, message: Buffer, packet: IPublishPacket)
 }
 
 function onScriptMessage(topic: string, message: Buffer, packet: IPublishPacket) {
-  console.log('onScriptMessage')
   if (packet.retain) {
     const script = CBOR.decode(message)
     scriptParsed.value = JSON.stringify(script, null, 2)
+    scriptCode.value = script.code
     runtimeLabel.value = `${script.runtime}: ${script.version}`
     setFormatedScript(script.code)
   }
@@ -153,17 +185,20 @@ async function createDeviceOracle() {
   }
   loading.value = false
 }
+
+async function emulate() {
+  emulation.value = true
+  EmulatorRef.value.emulate()
+}
+
+async function terminate() {
+  emulation.value = false
+  EmulatorRef.value.terminate()
+}
 </script>
 
 <style lang="scss">
 // can't be scoped
-.hljs {
-  max-height: 55vh;
-  background: var(--uniot-color-background-dark) !important;
-  padding: 0 !important;
-  padding-left: 10px !important;
-}
-
 .hljs-ln-numbers {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -186,5 +221,33 @@ async function createDeviceOracle() {
 
 .hljs-ln-code {
   padding-left: 10px;
+}
+
+.hljs.lisp {
+  max-height: 50vh;
+  background: var(--uniot-color-background-dark) !important;
+  padding: 0 !important;
+}
+
+.hljs.json {
+  padding-left: 0px !important;
+  max-height: 22vh;
+}
+
+.el-card.uniot-oracle-device-view-card {
+  border: none;
+
+  .el-card__footer {
+    padding: 0;
+    max-height: 25vh;
+
+    pre {
+      margin: 0;
+    }
+  }
+
+  .el-card__body {
+    padding-left: 0;
+  }
 }
 </style>

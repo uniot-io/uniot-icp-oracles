@@ -26,8 +26,9 @@
     "@element-plus/icons-vue": "^2.1.0",
     "@highlightjs/vue-plugin": "^2.1.0",
     "cbor-web": "^9.0.1",
-    "element-plus": "^2.3.14",
+    "element-plus": "^2.4.3",
     "highlight.js": "^11.9.0",
+    "lodash.debounce": "^4.0.8",
     "mqtt": "^5.0.5",
     "mqtt-match": "^3.0.0",
     "pinia": "^2.1.6",
@@ -38,6 +39,7 @@
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.4.0",
     "@types/buffers": "^0.1.31",
+    "@types/lodash.debounce": "^4.0.9",
     "@types/node": "^16.7.10",
     "@typescript-eslint/eslint-plugin": "^6.7.0",
     "@typescript-eslint/parser": "^6.7.0",
