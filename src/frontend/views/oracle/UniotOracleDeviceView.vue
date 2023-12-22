@@ -12,7 +12,13 @@
             Create Oracle
           </el-button>
           <el-button v-if="emulation" type="danger" :icon="RemoveFilled" @click="terminate">Terminate</el-button>
-          <el-button v-else type="success" :disabled="!scriptCode" :icon="CaretRight" @click="emulate">
+          <el-button
+            v-else
+            type="success"
+            :disabled="!scriptCode || !emulatorAvailable"
+            :icon="CaretRight"
+            @click="emulate"
+          >
             Emulate
           </el-button>
         </el-col>
@@ -29,7 +35,14 @@
     </template>
     <el-row>
       <el-col :span="12">
-        <emulator-view v-if="!loading" ref="EmulatorRef" v-model:log="log" :device="device" :script="scriptCode" />
+        <emulator-view
+          v-if="!loading"
+          v-model:emulation="emulation"
+          v-model:log="log"
+          :device="device"
+          :script="scriptCode"
+          :available="emulatorAvailable"
+        />
       </el-col>
       <el-col :span="12">
         <div class="code-frame" :data-label="runtimeLabel">
@@ -55,7 +68,7 @@ import { useMqttStore } from '@/store/MqttStore'
 import { useUniotStore } from '@/store/UniotStore'
 import { deviceScriptTopic, defaultDomain, deviceStatusTopic } from '@/utils/mqttTopics'
 import { beautify } from '@/utils/lisp/format'
-import { UniotDevice } from '@/types/uniot'
+import { UniotDevice, UniotGenericDevicePrimitives } from '@/types/uniot'
 import { OracleTemplate } from '@/types/oracle'
 import { initLineNumbersOnLoad } from '@/utils/highlightjs-line-numbers'
 import EmulatorView from '@/components/emulator/EmulatorView.vue'
@@ -89,11 +102,20 @@ const runtimeLabel = ref('Lisp')
 
 const log = ref('')
 const emulation = ref(false)
-const EmulatorRef = ref()
 const LoggerRef = ref()
 
 const statusTopic = computed(() => deviceStatusTopic(defaultDomain, uniotClient.userId, props.device.name))
 const scriptTopic = computed(() => deviceScriptTopic(defaultDomain, uniotClient.userId, props.device.name))
+
+const emulatorAvailable = computed(() => {
+  let available = true
+  props.device.data.primitives.forEach((p) => {
+    if (UniotGenericDevicePrimitives.includes(p)) {
+      available = false
+    }
+  })
+  return available
+})
 
 watch(
   () => ({
@@ -187,13 +209,12 @@ async function createDeviceOracle() {
 }
 
 async function emulate() {
+  if (!emulatorAvailable.value) return
   emulation.value = true
-  EmulatorRef.value.emulate()
 }
 
 async function terminate() {
   emulation.value = false
-  EmulatorRef.value.terminate()
 }
 </script>
 

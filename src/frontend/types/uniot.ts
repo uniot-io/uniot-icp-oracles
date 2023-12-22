@@ -17,6 +17,8 @@ export interface UniotDevice {
   data: UniotDeviceData
 }
 
+export const UniotGenericDevicePrimitives = ['dwrite', 'dread', 'awrite', 'aread', 'bclicked']
+
 export type UniotDevicePrimitives = 'dwrite' | 'dread' | 'awrite' | 'aread' | 'bclicked'
 
 export type UniotDeviceEvents = 'is_event' | 'pop_event' | 'push_event'

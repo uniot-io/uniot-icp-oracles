@@ -1,5 +1,8 @@
 <template>
   <div id="emulator" class="emulator">
+    <div v-if="!available" class="overlay">
+      <span>Emulator currently available<br />for the generic devices only</span>
+    </div>
     <div class="emulator-body is-flex">
       <div class="emulator-content is-flex flex-col items-start">
         <controls-container
@@ -26,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, markRaw, nextTick, onBeforeUnmount, computed } from 'vue'
+import { ref, onMounted, markRaw, nextTick, onBeforeUnmount, computed, watchEffect } from 'vue'
 import * as CBOR from 'cbor-web'
 import { useMqttStore } from '@/store/MqttStore'
 import { initLineNumbersOnLoad } from '@/utils/highlightjs-line-numbers'
@@ -134,6 +137,10 @@ onBeforeUnmount(() => {
   terminate()
 })
 
+watchEffect(() => {
+  props.emulation ? emulate() : terminate()
+})
+
 async function subscribeEmulatorTopics() {
   try {
     await mqttClient.subscribe(groupEventTopic.value, onEmulatorMessage)
@@ -177,6 +184,7 @@ async function emulate() {
   await updateLog(JSON.stringify({ states: [] }, null, 2))
   const { error, output } = await lispExecute(props.script, emulatorHandler)
   await updateLog(error || JSON.stringify(output, null, 2))
+  emit('update:emulation', false)
 }
 
 async function emulatorHandler(value: string) {
@@ -294,8 +302,27 @@ async function emulatorHandler(value: string) {
   background-color: #fff;
   border-radius: 0.5rem;
   overflow: auto;
+  position: relative;
 
   $header_height: 2.25rem;
+
+  .overlay {
+    background-color: rgba(255, 255, 255, 0.7);
+    position: absolute;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(8px);
+    user-select: none;
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: 600;
+  }
 
   .emulator-header {
     cursor: move;

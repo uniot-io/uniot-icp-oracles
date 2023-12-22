@@ -12,6 +12,7 @@ export type ControlEmits = {
 
 export type EmulatorEmits = {
   (e: 'update:log', data: string): void
+  (e: 'update:emulation', status: boolean): void
 }
 
 export type AvailablePrimitivesType = {
@@ -24,6 +25,8 @@ export type EmulatorViewPropsType = {
   device: UniotDevice
   script: string
   log: string
+  emulation: boolean
+  available: boolean
 }
 
 export type EmulatorStateType = {
