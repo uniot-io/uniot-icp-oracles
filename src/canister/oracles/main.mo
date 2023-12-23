@@ -8,6 +8,14 @@ import Broker "Broker";
 import HttpTypes "HttpTypes";
 import OracleTypes "OracleTypes";
 
+import Blob "mo:base/Blob";
+import Debug "mo:base/Debug";
+import Result "mo:base/Result";
+import CoseDecoder "Cose/Decoder";
+import CoseErrors "Cose/Errors";
+import CoseVerifier "Cose/Verifier";
+import Hex "Hex";
+
 actor {
 
   // system func preupgrade() {
@@ -128,5 +136,26 @@ actor {
       case null { { principal = msg.caller; oracles = [] } };
       case (?user) user.getDto()
     }
-  }
+  };
+
+  public shared (msg) func verifyCose(hexCose : Text, hexPubKey : Text) : async Result.Result<Bool, CoseErrors.Error> {
+    switch (Hex.decode(hexCose)) {
+      case (#ok(bytesCose)) {
+        Debug.print(debug_show (bytesCose));
+        switch (CoseDecoder.decode(Blob.fromArray(bytesCose))) {
+          case (#ok(msg)) {
+            switch (Hex.decode(hexPubKey)) {
+              case (#ok(bytesPubKey)) {
+                Debug.print(debug_show (bytesPubKey));
+                CoseVerifier.verify(msg, [], bytesPubKey)
+              };
+              case (#err e) #err(CoseErrors.extend("Failed to decode hexPubKey", e))
+            }
+          };
+          case (#err e) #err(CoseErrors.extend("Failed to decode cose message", e))
+        }
+      };
+      case (#err e) #err(CoseErrors.extend("Failed to decode hexCose", e))
+    }
+  };
 }
