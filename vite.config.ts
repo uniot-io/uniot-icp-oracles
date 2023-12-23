@@ -4,7 +4,7 @@ import vue from '@vitejs/plugin-vue'
 import ElementPlus from 'unplugin-element-plus/vite'
 
 const DFX_NETWORK = process.env.DFX_NETWORK || 'local'
-const REPLICA_URL = DFX_NETWORK === 'local' ? 'http://127.0.0.1:4943' : 'https://ic0.app'
+const REPLICA_URL = DFX_NETWORK === 'local' ? 'http://localhost:4943' : 'https://ic0.app'
 
 function initEnv() {
   let localCanisters, prodCanisters
@@ -29,7 +29,7 @@ function initEnv() {
 
   process.env['VITE_APP_II_URL'] =
     DFX_NETWORK === 'local'
-      ? `http://localhost:4943/?canisterId=${canisters['internet_identity'][DFX_NETWORK]}`
+      ? 'http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943'
       : 'https://identity.ic0.app'
   process.env['VITE_APP_II_DERIVATION'] =
     DFX_NETWORK === 'local'

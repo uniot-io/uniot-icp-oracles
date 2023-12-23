@@ -10,6 +10,7 @@
   ],
   "scripts": {
     "start": "vite",
+    "start-staging": "DFX_NETWORK=ic vite --mode staging",
     "build": "vue-tsc --noEmit && vite build --mode staging",
     "serve": "vite preview",
     "prebuild": "dfx generate",
