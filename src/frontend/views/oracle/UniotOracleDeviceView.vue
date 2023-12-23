@@ -122,10 +122,13 @@ watch(
     id: props.deviceId,
     device: props.device
   }),
-  async (_, prevDevice) => {
-    if (prevDevice) {
-      await mqttClient.unsubscribe(deviceStatusTopic(defaultDomain, uniotClient.userId, prevDevice.device.name))
-      await mqttClient.unsubscribe(deviceScriptTopic(defaultDomain, uniotClient.userId, prevDevice.device.name))
+  async (newValues, prevValues) => {
+    if (newValues.device && (newValues.id !== prevValues?.id)) {
+      if (prevValues?.device) {
+        await mqttClient.unsubscribe(deviceStatusTopic(defaultDomain, uniotClient.userId, prevValues.device.name));
+        await mqttClient.unsubscribe(deviceScriptTopic(defaultDomain, uniotClient.userId, prevValues.device.name));
+      }
+      await subscribeDeviceTopics()
     }
   },
   { immediate: true }
