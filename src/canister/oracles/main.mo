@@ -14,6 +14,9 @@ import Result "mo:base/Result";
 import CoseDecoder "Cose/Decoder";
 import CoseErrors "Cose/Errors";
 import CoseVerifier "Cose/Verifier";
+import CoseUtils "Cose/Utils";
+import Encoder "Cose/Encoder";
+import Signer "Cose/Signer";
 import Hex "Hex";
 
 actor {
@@ -149,13 +152,47 @@ actor {
                 Debug.print(debug_show (bytesPubKey));
                 CoseVerifier.verify(msg, [], bytesPubKey)
               };
-              case (#err e) #err(CoseErrors.extend("Failed to decode hexPubKey", e))
+              case (#err e) #err(CoseErrors.wrap("Failed to decode hexPubKey", e))
             }
           };
-          case (#err e) #err(CoseErrors.extend("Failed to decode cose message", e))
+          case (#err e) #err(CoseErrors.wrap("Failed to decode cose message", e))
         }
       };
-      case (#err e) #err(CoseErrors.extend("Failed to decode hexCose", e))
+      case (#err e) #err(CoseErrors.wrap("Failed to decode hexCose", e))
     }
   };
+
+  let init = Text.encodeUtf8("UNIOT");
+  let signer = Signer.SECP256K1(init, #development);
+
+  public shared (msg) func public_key() : async Result.Result<Text, CoseErrors.Error> {
+    switch (await signer.publicKey()) {
+      case (#ok key) #ok(Hex.encode(key));
+      case (#err e) #err e
+    }
+  };
+
+  public shared (msg) func sign(message : Text) : async Result.Result<Text, CoseErrors.Error> {
+    switch (Hex.decode(message)) {
+      case (#ok bytes) {
+        switch (await signer.sign(bytes)) {
+          case (#ok signature) #ok(Hex.encode(signature));
+          case (#err e) #err e
+        }
+      };
+      case (#err e) #err e
+    }
+  };
+
+  public shared (msg) func signCose(payload : Text) : async Result.Result<Text, CoseErrors.Error> {
+    let payloadBytes = Blob.toArray(Text.encodeUtf8(payload));
+    let message = CoseUtils.Sign1Message.new(payloadBytes, #map([]));
+    switch (await Encoder.encode(#sign1(message), signer, [])) {
+      case (#ok(bytes)) {
+        Debug.print(debug_show (message));
+        #ok(Hex.encode(bytes))
+      };
+      case (#err e) #err e
+    }
+  }
 }
