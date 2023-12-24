@@ -5,6 +5,7 @@ import CborDecoder "mo:cbor/Decoder";
 import CborValue "CborValue";
 import CoseTypes "CoseTypes";
 import Errors "Errors";
+import Utils "Utils";
 
 import Debug "mo:base/Debug";
 
@@ -27,35 +28,30 @@ module Decoder {
           case _ #err(#msg "Unrecognized format")
         }
       };
-      case (#err e) #err(Errors.extendDecodingError("Error decoding CBOR", e))
+      case (#err e) #err(Errors.wrapDecodingError("Error decoding CBOR", e))
     }
   };
 
   private func decodeSign1Message(body : [CborValue.Value]) : Result.Result<CoseTypes.Sign1Message, Errors.Error> {
-    var rawProtectedHeader : [Nat8] = [];
-    var protectedHeader : CborValue.Value = #simple(#nil);
-    var unprotectedHeader : CborValue.Value = #simple(#nil);
-    var payload : [Nat8] = [];
-    var signature : [Nat8] = [];
-
+    let msg = Utils.Sign1Message.new([], #simple(#nil));
     switch (Array.size(body)) {
       case (4) {
         switch (body[0]) {
           case (#bytes(ph)) {
-            rawProtectedHeader := ph;
-            switch (CborDecoder.decode(Blob.fromArray(rawProtectedHeader))) {
+            msg.rawProtectedHeader := ph;
+            switch (CborDecoder.decode(Blob.fromArray(msg.rawProtectedHeader))) {
               case (#ok(dph)) {
-                protectedHeader := CborValue.toReadable(dph);
+                msg.protectedHeader := CborValue.toReadable(dph);
                 switch (body[1]) {
                   case (#map(uph)) {
-                    unprotectedHeader := #map(uph);
+                    msg.unprotectedHeader := #map(uph);
                     switch (body[2]) {
                       case (#bytes(p)) {
-                        payload := p;
+                        msg.payload := p;
                         switch (body[3]) {
                           case (#bytes(s)) {
-                            signature := s;
-                            #ok({ rawProtectedHeader; protectedHeader; unprotectedHeader; payload; signature })
+                            msg.signature := s;
+                            #ok msg
                           };
                           case _ #err(#msg "Malformed Signature")
                         }
@@ -66,7 +62,7 @@ module Decoder {
                   case _ #err(#msg "Malformed Unprotected Header")
                 }
               };
-              case (#err e) #err(Errors.extendDecodingError("Error decoding Protected Header", e))
+              case (#err e) #err(Errors.wrapDecodingError("Error decoding Protected Header", e))
             }
           };
           case _ #err(#msg "Malformed Protected Header")

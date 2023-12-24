@@ -10,18 +10,17 @@ let
         name = "cbor"
         , version = "v1.0.1"
         , repo = "https://github.com/gekctek/motoko_cbor"
-        , dependencies = [] : List Text
-      },
-      {
-         name = "xtended-numbers"
-         , version = "v1.0.2"
-         , repo = "https://github.com/edjcase/motoko_numbers"
-         , dependencies = [] : List Text
+        , dependencies = [ "xtended-numbers" ] : List Text
       },
       { name = "ed25519"
         , version = "v1.0.1"
         , repo = "https://github.com/nirvana369/ed25519.git"
         , dependencies = [ "base" ] : List Text
+      },
+      { name = "ecdsa"
+        , version = "main"
+        , repo = "https://github.com/herumi/ecdsa-motoko.git"
+        , dependencies = [ "sha2" ] : List Text
       },
     ] : List Package
 

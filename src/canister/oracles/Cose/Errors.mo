@@ -5,28 +5,28 @@ module Errors {
     #msg : Text
   };
 
-  public func extend(extendedMsg : Text, e : Error) : Error {
+  public func wrap(wrapMsg : Text, e : Error) : Error {
     #msg(
       switch (e) {
-        case (#msg(messageText)) extendedMsg # ": " # messageText
+        case (#msg(originMsg)) wrapMsg # ": " # originMsg
       }
     )
   };
 
-  public func extendDecodingError(extendedMsg : Text, e : CborErrors.DecodingError) : Error {
+  public func wrapDecodingError(wrapMsg : Text, e : CborErrors.DecodingError) : Error {
     #msg(
       switch (e) {
-        case (#invalid(messageText)) extendedMsg # ": " # messageText;
-        case (#unexpectedEndOfBytes) extendedMsg # ": " # "unexpected end of bytes";
-        case (#unexpectedBreak) extendedMsg # ": " # "unexpected break"
+        case (#invalid(originMsg)) wrapMsg # ": " # originMsg;
+        case (#unexpectedEndOfBytes) wrapMsg # ": " # "unexpected end of bytes";
+        case (#unexpectedBreak) wrapMsg # ": " # "unexpected break"
       }
     )
   };
 
-  public func extendEncodingError(extendedMsg : Text, e : CborErrors.EncodingError) : Error {
+  public func wrapEncodingError(wrapMsg : Text, e : CborErrors.EncodingError) : Error {
     #msg(
       switch (e) {
-        case (#invalidValue(messageText)) extendedMsg # ": " # messageText
+        case (#invalidValue(originMsg)) wrapMsg # ": " # originMsg
       }
     )
   }

@@ -6,11 +6,11 @@ module CoseTypes {
   };
 
   public type Sign1Message = {
-    rawProtectedHeader : [Nat8];
-    protectedHeader : CborValue.Value;
-    unprotectedHeader : CborValue.Value;
-    payload : [Nat8];
-    signature : [Nat8]
+    var rawProtectedHeader : [Nat8];
+    var protectedHeader : CborValue.Value;
+    var unprotectedHeader : CborValue.Value;
+    var payload : [Nat8];
+    var signature : [Nat8]
   };
 
   public module HeaderLabel {
@@ -32,7 +32,8 @@ module CoseTypes {
     public let ES256 : Int = -7;
     public let ES384 : Int = -35;
     public let ES512 : Int = -36;
-    public let EdDSA : Int = -8
+    public let EdDSA : Int = -8;
+    public let ES256K : Int = -47; // [RFC8812][RFC9053]
     // ...
   }
 }
