@@ -89,7 +89,7 @@ import { MqttMessageSecurity, MqttMessageStatus, MqttMessageType } from '@/types
 import { useIcpClientStore } from '@/store/IcpClient'
 import { useMqttStore } from '@/store/MqttStore'
 import { OracleDto, SubscriptionDto } from '@/../declarations/oracles_backend/oracles_backend.did'
-import { decodeMessage } from '@/utils/msgDecoder'
+import { decodeIntoString } from '@/utils/msgDecoder'
 
 interface TableRowData {
   id: string
@@ -133,7 +133,7 @@ const tableRowsData = computed<GenericTableRowData[]>(() => {
       id: topic,
       date: data.date.toLocaleString(),
       topic: topic,
-      message: decodeMessage(data.message, data.msgType),
+      message: decodeIntoString(data.message, data.msgType),
       status: data.status,
       security: data.security,
       showFullMessage: false
@@ -146,7 +146,7 @@ const tableRowsData = computed<GenericTableRowData[]>(() => {
             id: `mqtt-${topic}`,
             date: mqttData.date.toLocaleString(),
             // topic: topic,
-            message: decodeMessage(mqttData.message, mqttData.msgType),
+            message: decodeIntoString(mqttData.message, mqttData.msgType),
             // status: mqttData.status,
             security: mqttData.security,
             showFullMessage: false,

@@ -44,9 +44,7 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, computed } from 'vue'
-import { Buffer } from 'buffer'
 import { IPublishPacket } from 'mqtt-packet'
-import * as CBOR from 'cbor-web'
 import { useIcpClientStore } from '@/store/IcpClient'
 import { useMqttStore } from '@/store/MqttStore'
 import { useUniotStore } from '@/store/UniotStore'
@@ -54,8 +52,9 @@ import { deviceStatusTopic, defaultDomain, parseDeviceTopic } from '@/utils/mqtt
 import OracleMenu, { OracleMenuItem } from '@/components/oracle/OracleMenu.vue'
 import UniotOracleDeviceView from '@/views/oracle/UniotOracleDeviceView.vue'
 import GenericOracleTopicsView from '@/views/oracle/GenericOracleTopicsView.vue'
-import { UniotDevice } from '@/types/uniot'
+import { UniotDevice, UniotDeviceData } from '@/types/uniot'
 import { OracleTemplate } from '@/types/oracle'
+import { decodeIntoJSON } from '@/utils/msgDecoder'
 
 const ZERO_ORACLE_ID = -1n
 const icpClient = useIcpClientStore()
@@ -127,7 +126,8 @@ function onDeviceMessage(topic: string, message: Buffer, packet: IPublishPacket)
   if (packet.retain) {
     const { deviceId } = parseDeviceTopic(topic)
     const intDeviceId = calcDeviceId(deviceId)
-    uniotDevices.value.set(intDeviceId, { name: deviceId, data: CBOR.decode(message) })
+    const messageDecoded = decodeIntoJSON<UniotDeviceData>(message, 'CBOR')
+    uniotDevices.value.set(intDeviceId, { name: deviceId, data: messageDecoded })
     if (currentOracleId.value === ZERO_ORACLE_ID) {
       currentOracleId.value = intDeviceId
     }
