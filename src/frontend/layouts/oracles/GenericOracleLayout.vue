@@ -19,7 +19,10 @@
         class="un-inner-right"
         v-else-if="currentView === 'oracle'"
         :oracleId="currentOracleId"
+        :oracle-template="currentOracleTemplate"
+        @message:publish="onPublishMessage"
       />
+      <oracle-publish-view v-else-if="currentView === 'publish'" @submit="onPublish" />
     </template>
     <el-main class="un-empty-inner" v-else>
       <el-empty description="You have not created any IoT Oracles yet." />
@@ -29,13 +32,16 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { OracleSettings } from '@/types/oracle'
+import { OraclePublication, OracleSettings } from '@/types/oracle'
 import { useIcpClientStore } from '@/store/IcpClient'
 import OracleMenu, { OracleMenuItem } from '@/components/oracle/OracleMenu.vue'
 import GenericOracleCreateView from '@/views/oracle/GenericOracleCreateView.vue'
 import GenericOracleTopicsView from '@/views/oracle/GenericOracleTopicsView.vue'
+import OraclePublishView from '@/views/oracle/OraclePublishView.vue'
+import { convertPublishPayloadByType } from '@/utils/msgDecoder'
+import { OracleTemplateType } from '@/types/oracle'
 
-type SelectedView = 'create' | 'oracle' | undefined
+type SelectedView = 'create' | 'oracle' | 'publish' | undefined
 const createId = -1n
 
 const icpClient = useIcpClientStore()
@@ -43,6 +49,7 @@ const loading = ref(true)
 const currentView = ref<SelectedView>(undefined)
 const currentOracleId = ref<bigint>(createId)
 const oracles = ref<Array<OracleMenuItem>>([])
+const currentOracleTemplate = ref<OracleTemplateType>('generic')
 
 onMounted(async () => {
   loading.value = true
@@ -51,9 +58,11 @@ onMounted(async () => {
     oracles.value = currentUser.oracles.map(({ id, name, template }) => ({ id, name, template }))
     currentView.value = 'oracle'
     currentOracleId.value = currentUser.oracles[0].id
+    currentOracleTemplate.value = currentUser.oracles[0].template as OracleTemplateType
   } else {
     currentView.value = 'create'
     currentOracleId.value = createId
+    currentOracleTemplate.value = 'generic'
   }
   loading.value = false
 })
@@ -65,6 +74,7 @@ async function onSelectOracle({ oracleId }: { oracleId: bigint }) {
   } else {
     currentView.value = 'oracle'
     currentOracleId.value = oracleId
+    currentOracleTemplate.value = oracles.value.find((o) => o.id === oracleId)!.template as OracleTemplateType
   }
 }
 
@@ -81,5 +91,16 @@ async function onCreateOrUpdateOracle(oracle: OracleSettings) {
     console.error(error)
   }
   loading.value = false
+}
+
+async function onPublishMessage() {
+  currentView.value = 'publish'
+}
+
+async function onPublish(data: OraclePublication) {
+  const convertion = convertPublishPayloadByType(data.message, data.msgType)
+  console.log('Publish via oracle:', convertion)
+  // await icpClient.actor?.publish(currentOracleId, convertion)
+  // currentView.value = 'oracle'
 }
 </script>

@@ -27,3 +27,8 @@ export interface OracleSettings {
   template: OracleTemplateType
   topics: OracleTopic[]
 }
+
+export interface OraclePublication extends OracleTopic {
+  message: string
+  signed: boolean
+}
