@@ -12,7 +12,7 @@ module Verifier {
     }
   };
 
-  private func verifySign1Message(message : CoseTypes.Sign1Message, externalAad : [Nat8], publicKey : [Nat8]) : Result.Result<Bool, Errors.Error> {
+  public func verifySign1Message(message : CoseTypes.Sign1Message, externalAad : [Nat8], publicKey : [Nat8]) : Result.Result<Bool, Errors.Error> {
     switch (Utils.Map.getInt(message.protectedHeader, CoseTypes.HeaderLabel.Algorithm)) {
       case (#ok(alg)) {
         if (alg == CoseTypes.Algorithm.EdDSA or alg == CoseTypes.Algorithm.ES256K) {

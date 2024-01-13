@@ -2,11 +2,16 @@ import I "mo:base/Iter";
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
 import Blob "mo:base/Blob";
+import Bool "mo:base/Bool";
 import Array "mo:base/Array";
-import Cycles "mo:base/ExperimentalCycles";
 import Nat64 "mo:base/Nat64";
+import Debug "mo:base/Debug";
+import Cycles "mo:base/ExperimentalCycles";
 import HttpTypes "HttpTypes";
 import CharUtils "CharUtils";
+import CoseDecoder "Cose/Decoder";
+import CoseVerifier "Cose/Verifier";
+import Hex "Hex";
 
 module Broker {
   public func transformResponse(raw : HttpTypes.TransformArgs) : HttpTypes.HttpResponsePayload {
@@ -67,34 +72,65 @@ module Broker {
   public class UrlBuilder(_host : Text) {
     let host = _host;
 
-    public func retainedMessage(topic : Text) : Text {
-      "https://" #host # "/api/v1/messages/retained?topic=" # topic
+    public func retainedMessage(topic : Text, sign : Bool) : Text {
+      "https://" # host # "/api/v1/messages/retained?topic=" # topic # "&sign=" # Bool.toText(sign)
     }
   };
 
-  public class Broker(_host : Text, _transform : shared query HttpTypes.TransformArgs -> async HttpTypes.HttpResponsePayload) {
+  public class Broker(_host : Text, _publicKey : Text, _transform : shared query HttpTypes.TransformArgs -> async HttpTypes.HttpResponsePayload) {
     let urlBuilder : UrlBuilder = UrlBuilder(_host);
+    let publicKey : [Nat8] = Hex.unsafeDecode(_publicKey);
     let client : HttpClient = HttpClient(_transform);
     let expectedResponseBytes : Nat64 = 2 * 1024;
     let maxCycles = 200_000_000_000;
 
-    public func handleRetainedMessages(topics : I.Iter<Text>, handler : (topic : Text, msg : Blob) -> ()) : async (Nat, Nat) {
+    public func handleRetainedMessages(topics : I.Iter<Text>, sign : Bool, handler : (topic : Text, msg : Blob, signed : Bool, verified : Bool) -> ()) : async (Nat, Nat) {
       var successfullUpdates : Nat = 0;
       var totalCyclesUsed : Nat = 0;
 
       for (topic in topics) {
-        let url = urlBuilder.retainedMessage(topic);
+        let url = urlBuilder.retainedMessage(topic, sign);
         let headers = [{ name = "Accept"; value = "application/octet-stream" }];
         let (response, cyclesUsed) = await client.get(url, headers, expectedResponseBytes, maxCycles);
 
         totalCyclesUsed += cyclesUsed;
         if (response.status == 200) {
-          handler(topic, Blob.fromArray(response.body));
+          let message = Blob.fromArray(response.body);
+          if (sign) {
+            let (verified, verifiedMessage) = Message.getVerifiedMessage(message, publicKey);
+            handler(topic, verifiedMessage, true, verified)
+          } else {
+            handler(topic, message, false, false)
+          };
           successfullUpdates += 1
         }
       };
 
       return (successfullUpdates, totalCyclesUsed)
+    }
+  };
+
+  public module Message {
+    public func getVerifiedMessage(message : Blob, publicKey : [Nat8]) : (Bool, Blob) {
+      switch (CoseDecoder.decode(message)) {
+        case (#ok(msg)) {
+          switch (msg) {
+            case (#sign1(coseSign1Msg)) {
+              switch (CoseVerifier.verifySign1Message(coseSign1Msg, [], publicKey)) {
+                case (#ok(verified))(verified, Blob.fromArray(coseSign1Msg.payload));
+                case (#err e) {
+                  Debug.print(debug_show (e));
+                  (false, Blob.fromArray(coseSign1Msg.payload))
+                }
+              }
+            }
+          }
+        };
+        case (#err e) {
+          Debug.print(debug_show (e));
+          (false, message)
+        }
+      }
     }
   }
 }

@@ -1,3 +1,4 @@
+import Env "mo:env";
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
 import Time "mo:base/Time";
@@ -31,7 +32,7 @@ actor {
     Broker.transformResponse(raw)
   };
 
-  let broker = Broker.Broker("mqtt.uniot.io", transformBrokerResponse);
+  let broker = Broker.Broker(Env.BROKER_URL, Env.BROKER_PUB_KEY, transformBrokerResponse);
   var subscriptions : TrieMap.TrieMap<Text, OracleTypes.Subscription> = TrieMap.TrieMap<Text, OracleTypes.Subscription>(Text.equal, Text.hash);
   var oracles : RBTree.RBTree<Nat, OracleTypes.Oracle> = RBTree.RBTree<Nat, OracleTypes.Oracle>(Nat.compare);
   var users : TrieMap.TrieMap<Principal, OracleTypes.User> = TrieMap.TrieMap<Principal, OracleTypes.User>(Principal.equal, Principal.hash);
@@ -89,14 +90,16 @@ actor {
     }
   };
 
-  private func publish(topic : Text, message : Blob) {
+  private func submitRetainedMessage(topic : Text, message : Blob, signed : Bool, verified : Bool) {
     switch (subscriptions.get(topic)) {
       case (null) {
         assert false
       };
       case (?existingSubscription) {
-        existingSubscription.message := message;
         existingSubscription.timestamp := Time.now();
+        existingSubscription.message := message;
+        existingSubscription.signed := signed;
+        existingSubscription.verified := verified;
         ignore subscriptions.replace(topic, existingSubscription)
       }
     }
@@ -110,7 +113,7 @@ actor {
 
     assert existingOracle.owner == msg.caller;
 
-    await broker.handleRetainedMessages(existingOracle.getSubscriptionsIter(), publish)
+    await broker.handleRetainedMessages(existingOracle.getSubscriptionsIter(), true, submitRetainedMessage)
   };
 
   public query func getSubscription(topic : Text) : async ?OracleTypes.SubscriptionDto {

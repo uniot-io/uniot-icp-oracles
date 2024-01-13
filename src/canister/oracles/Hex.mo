@@ -6,6 +6,7 @@ import Iter "mo:base/Iter";
 import Array "mo:base/Array";
 import Result "mo:base/Result";
 import Option "mo:base/Option";
+import Debug "mo:base/Debug";
 
 /**
  * This module provides functions for encoding and decoding arrays of
@@ -63,6 +64,16 @@ module {
     let c1 = symbols[Nat8.toNat(w8 / base)];
     let c2 = symbols[Nat8.toNat(w8 % base)];
     Char.toText(c1) # Char.toText(c2)
+  };
+
+  public func unsafeDecode(text : Text) : [Nat8] {
+    switch (decode(text)) {
+      case (#ok(bytes)) bytes;
+      case (#err e) {
+        Debug.print(debug_show (e));
+        []
+      }
+    }
   };
 
   /**
