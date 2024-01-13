@@ -22,7 +22,8 @@ export const useMqttStore = defineStore('mqttStore', () => {
     }
 
     try {
-      client.value = await mqtt.connectAsync('wss://mqtt.uniot.io:8083/', {
+      const url = import.meta.env.VITE_APP_UNIOT_MQTT_URL
+      client.value = await mqtt.connectAsync(url, {
         clientId: 'uniot_oracle_' + Math.random().toString(16).substring(2, 10),
         clean: false
       })
