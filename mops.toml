@@ -1,0 +1,7 @@
+[dependencies]
+base = "0.10.2"
+matchers = "https://github.com/kritzcreek/motoko-matchers#3dac8a071b69e4e651b25a7d9683fe831eb7cffd"
+cbor = "https://github.com/gekctek/motoko_cbor#v1.0.1"
+xtended-numbers = "https://github.com/edjcase/motoko_numbers#773953141f976ccdfc2e6a2c451b841a53bb39a0"
+ed25519 = "https://github.com/nirvana369/ed25519#v1.0.1"
+ecdsa = "https://github.com/herumi/ecdsa-motoko#63466478d3d2c3dab8481f62d8256a0e75f7cd8b"
