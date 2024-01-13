@@ -7,6 +7,7 @@ import hljs from 'highlight.js/lib/core'
 import lisp from 'highlight.js/lib/languages/lisp'
 import json from 'highlight.js/lib/languages/json'
 import hljsVuePlugin from '@highlightjs/vue-plugin'
+import { install as VueMonacoEditorPlugin } from '@guolao/vue-monaco-editor'
 import App from '@/App.vue'
 import router from './router'
 import '@/plugins/wasm-lisp'
@@ -26,4 +27,7 @@ app.use(ElementPlus)
 app.use(hljsVuePlugin)
 app.use(createPinia())
 app.use(router)
+app.use(VueMonacoEditorPlugin, {
+  paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' }
+})
 app.mount('#app')

@@ -6,7 +6,7 @@ export const MqttMessageTypes: MqttMessageType[] = ['JSON', 'CBOR', 'PlainText']
 
 export type MqttMessageStatus = 'up-to-date' | 'outdated'
 
-export type MqttMessageSecurity = 'unsecured'
+export type MqttMessageSecurity = 'unsecured' | 'secured'
 
 export type MqttMessageDeviceEvent = {
   eventID: string

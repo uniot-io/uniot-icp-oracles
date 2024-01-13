@@ -25,3 +25,19 @@ export function decodeIntoJSON<T>(byteArray: Buffer, dataType: MqttMessageType):
 export function decodeIntoString(byteArray: Buffer, dataType: MqttMessageType): string {
   return JSON.stringify(decodeMessage(byteArray, dataType), null, 2)
 }
+
+export function convertPublishPayloadByType(
+  value: string,
+  type: MqttMessageType
+): { payload: string | Buffer; type: string } {
+  switch (type) {
+    case 'CBOR':
+      return { payload: CBOR.encode(JSON.parse(value)), type: 'JSON as CBOR' }
+    case 'JSON':
+      return { payload: Buffer.from(JSON.stringify(JSON.parse(value))), type }
+    case 'PlainText':
+      return { payload: Buffer.from(value), type }
+    default:
+      throw new Error(`Can not convert message of type "${type}". Add a handler`)
+  }
+}
