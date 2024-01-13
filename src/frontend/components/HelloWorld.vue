@@ -63,8 +63,8 @@ export default defineComponent({
       const oracleDto = await actor.getOracle(oracleId)
       console.log('oracleDto:', oracleDto)
 
-      await actor.publish('hello', new TextEncoder().encode('world'))
-      console.log('published')
+      // await actor.publish('hello', new TextEncoder().encode('world'))
+      // console.log('published')
 
       const subscription = await actor.getSubscription('hello')
       console.log('subscription:', subscription)

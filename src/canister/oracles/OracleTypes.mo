@@ -12,6 +12,8 @@ module OracleTypes {
   public type SubscriptionDto = {
     topic : Text;
     message : Blob;
+    signed : Bool;
+    verified : Bool;
     timestamp : Int;
     refCount : Nat
   };
@@ -34,8 +36,10 @@ module OracleTypes {
     public var message = Blob.fromArray([]);
     public var timestamp : Int = 0;
     public var refCount : Nat = 0;
+    public var signed : Bool = false;
+    public var verified : Bool = false;
 
-    public func getDto() : SubscriptionDto { { topic; message; timestamp; refCount } }
+    public func getDto() : SubscriptionDto { { topic; message; signed; verified; timestamp; refCount } }
   };
 
   public class Oracle(_id : Nat, _owner : Principal, _name : Text, _template : Text) {

@@ -5,13 +5,16 @@ import ElementPlus from 'element-plus'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import hljs from 'highlight.js/lib/core'
 import lisp from 'highlight.js/lib/languages/lisp'
+import json from 'highlight.js/lib/languages/json'
 import hljsVuePlugin from '@highlightjs/vue-plugin'
 import App from '@/App.vue'
 import router from './router'
-hljs.registerLanguage('lisp', lisp)
-
+import '@/plugins/wasm-lisp'
 import '@/assets/scss/index.scss'
 import 'highlight.js/styles/base16/github.css'
+
+hljs.registerLanguage('lisp', lisp)
+hljs.registerLanguage('json', json)
 
 const app = createApp(App)
 

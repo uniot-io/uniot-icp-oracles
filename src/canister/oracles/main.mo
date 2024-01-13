@@ -1,3 +1,4 @@
+import Env "mo:env";
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
 import Time "mo:base/Time";
@@ -7,6 +8,17 @@ import Principal "mo:base/Principal";
 import Broker "Broker";
 import HttpTypes "HttpTypes";
 import OracleTypes "OracleTypes";
+
+import Blob "mo:base/Blob";
+import Debug "mo:base/Debug";
+import Result "mo:base/Result";
+import CoseDecoder "Cose/Decoder";
+import CoseErrors "Cose/Errors";
+import CoseVerifier "Cose/Verifier";
+import CoseUtils "Cose/Utils";
+import Encoder "Cose/Encoder";
+import Signer "Cose/Signer";
+import Hex "Hex";
 
 actor {
 
@@ -20,7 +32,7 @@ actor {
     Broker.transformResponse(raw)
   };
 
-  let broker = Broker.Broker("mqtt.uniot.io", transformBrokerResponse);
+  let broker = Broker.Broker(Env.BROKER_URL, Env.BROKER_PUB_KEY, transformBrokerResponse);
   var subscriptions : TrieMap.TrieMap<Text, OracleTypes.Subscription> = TrieMap.TrieMap<Text, OracleTypes.Subscription>(Text.equal, Text.hash);
   var oracles : RBTree.RBTree<Nat, OracleTypes.Oracle> = RBTree.RBTree<Nat, OracleTypes.Oracle>(Nat.compare);
   var users : TrieMap.TrieMap<Principal, OracleTypes.User> = TrieMap.TrieMap<Principal, OracleTypes.User>(Principal.equal, Principal.hash);
@@ -78,14 +90,16 @@ actor {
     }
   };
 
-  private func publish(topic : Text, message : Blob) {
+  private func submitRetainedMessage(topic : Text, message : Blob, signed : Bool, verified : Bool) {
     switch (subscriptions.get(topic)) {
       case (null) {
         assert false
       };
       case (?existingSubscription) {
-        existingSubscription.message := message;
         existingSubscription.timestamp := Time.now();
+        existingSubscription.message := message;
+        existingSubscription.signed := signed;
+        existingSubscription.verified := verified;
         ignore subscriptions.replace(topic, existingSubscription)
       }
     }
@@ -99,7 +113,7 @@ actor {
 
     assert existingOracle.owner == msg.caller;
 
-    await broker.handleRetainedMessages(existingOracle.getSubscriptionsIter(), publish)
+    await broker.handleRetainedMessages(existingOracle.getSubscriptionsIter(), true, submitRetainedMessage)
   };
 
   public query func getSubscription(topic : Text) : async ?OracleTypes.SubscriptionDto {
@@ -127,6 +141,61 @@ actor {
     return switch (users.get(msg.caller)) {
       case null { { principal = msg.caller; oracles = [] } };
       case (?user) user.getDto()
+    }
+  };
+
+  public shared (msg) func verifyCose(hexCose : Text, hexPubKey : Text) : async Result.Result<Bool, CoseErrors.Error> {
+    switch (Hex.decode(hexCose)) {
+      case (#ok(bytesCose)) {
+        Debug.print(debug_show (bytesCose));
+        switch (CoseDecoder.decode(Blob.fromArray(bytesCose))) {
+          case (#ok(msg)) {
+            switch (Hex.decode(hexPubKey)) {
+              case (#ok(bytesPubKey)) {
+                Debug.print(debug_show (bytesPubKey));
+                CoseVerifier.verify(msg, [], bytesPubKey)
+              };
+              case (#err e) #err(CoseErrors.wrap("Failed to decode hexPubKey", e))
+            }
+          };
+          case (#err e) #err(CoseErrors.wrap("Failed to decode cose message", e))
+        }
+      };
+      case (#err e) #err(CoseErrors.wrap("Failed to decode hexCose", e))
+    }
+  };
+
+  let init = Text.encodeUtf8("UNIOT");
+  let signer = Signer.SECP256K1(init, #development);
+
+  public shared (msg) func public_key() : async Result.Result<Text, CoseErrors.Error> {
+    switch (await signer.publicKey()) {
+      case (#ok key) #ok(Hex.encode(key));
+      case (#err e) #err e
+    }
+  };
+
+  public shared (msg) func sign(message : Text) : async Result.Result<Text, CoseErrors.Error> {
+    switch (Hex.decode(message)) {
+      case (#ok bytes) {
+        switch (await signer.sign(bytes)) {
+          case (#ok signature) #ok(Hex.encode(signature));
+          case (#err e) #err e
+        }
+      };
+      case (#err e) #err e
+    }
+  };
+
+  public shared (msg) func signCose(payload : Text) : async Result.Result<Text, CoseErrors.Error> {
+    let payloadBytes = Blob.toArray(Text.encodeUtf8(payload));
+    let message = CoseUtils.Sign1Message.new(payloadBytes, #map([]));
+    switch (await Encoder.encode(#sign1(message), signer, [])) {
+      case (#ok(bytes)) {
+        Debug.print(debug_show (message));
+        #ok(Hex.encode(bytes))
+      };
+      case (#err e) #err e
     }
   }
 }

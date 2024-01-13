@@ -207,6 +207,7 @@ async function getOracleData(oracleId: bigint) {
 
 async function syncOracleData() {
   loading.value = true
+  // @ts-expect-error
   const [successfullUpdates, totalCyclesUsed] = await icpClient.actor?.syncOracle(props.oracleId)
   console.log(`successfull updates: ${successfullUpdates}, total cycles used: ${totalCyclesUsed}`)
   await getOracleData(props.oracleId)
