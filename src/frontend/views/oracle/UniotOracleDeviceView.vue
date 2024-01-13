@@ -12,7 +12,13 @@
             Create Oracle
           </el-button>
           <el-button v-if="emulation" type="danger" :icon="RemoveFilled" @click="terminate">Terminate</el-button>
-          <el-button v-else type="success" :disabled="!scriptCode" :icon="CaretRight" @click="emulate">
+          <el-button
+            v-else
+            type="success"
+            :disabled="!scriptCode || !emulatorAvailable"
+            :icon="CaretRight"
+            @click="emulate"
+          >
             Emulate
           </el-button>
         </el-col>
@@ -29,7 +35,14 @@
     </template>
     <el-row>
       <el-col :span="12">
-        <emulator-view v-if="!loading" ref="EmulatorRef" v-model:log="log" :device="device" :script="scriptCode" />
+        <emulator-view
+          v-if="!loading"
+          v-model:emulation="emulation"
+          v-model:log="log"
+          :device="device"
+          :script="scriptCode"
+          :available="emulatorAvailable"
+        />
       </el-col>
       <el-col :span="12">
         <div class="code-frame" :data-label="runtimeLabel">
@@ -46,7 +59,6 @@
 </template>
 
 <script setup lang="ts">
-import * as CBOR from 'cbor-web'
 import { watch, ref, onUnmounted, computed, onMounted, nextTick } from 'vue'
 import { CirclePlus, CaretRight, RemoveFilled } from '@element-plus/icons-vue'
 import { IPublishPacket } from 'mqtt-packet'
@@ -55,8 +67,10 @@ import { useMqttStore } from '@/store/MqttStore'
 import { useUniotStore } from '@/store/UniotStore'
 import { deviceScriptTopic, defaultDomain, deviceStatusTopic } from '@/utils/mqttTopics'
 import { beautify } from '@/utils/lisp/format'
-import { UniotDevice } from '@/types/uniot'
+import { decodeIntoJSON, decodeIntoString } from '@/utils/msgDecoder'
+import { UniotDevice, UniotGenericDevicePrimitives } from '@/types/uniot'
 import { OracleTemplate } from '@/types/oracle'
+import { MqttMessageDeviceScript, MqttMessageDeviceStatus } from '@/types/mqtt'
 import { initLineNumbersOnLoad } from '@/utils/highlightjs-line-numbers'
 import EmulatorView from '@/components/emulator/EmulatorView.vue'
 
@@ -89,11 +103,20 @@ const runtimeLabel = ref('Lisp')
 
 const log = ref('')
 const emulation = ref(false)
-const EmulatorRef = ref()
 const LoggerRef = ref()
 
 const statusTopic = computed(() => deviceStatusTopic(defaultDomain, uniotClient.userId, props.device.name))
 const scriptTopic = computed(() => deviceScriptTopic(defaultDomain, uniotClient.userId, props.device.name))
+
+const emulatorAvailable = computed(() => {
+  let available = true
+  props.device.data.primitives.forEach((p) => {
+    if (!UniotGenericDevicePrimitives.includes(p)) {
+      available = false
+    }
+  })
+  return available
+})
 
 watch(
   () => ({
@@ -101,10 +124,10 @@ watch(
     device: props.device
   }),
   async (newValues, prevValues) => {
-    if (newValues.device && (newValues.id !== prevValues?.id)) {
+    if (newValues.device && newValues.id !== prevValues?.id) {
       if (prevValues?.device) {
-        await mqttClient.unsubscribe(deviceStatusTopic(defaultDomain, uniotClient.userId, prevValues.device.name));
-        await mqttClient.unsubscribe(deviceScriptTopic(defaultDomain, uniotClient.userId, prevValues.device.name));
+        await mqttClient.unsubscribe(deviceStatusTopic(defaultDomain, uniotClient.userId, prevValues.device.name))
+        await mqttClient.unsubscribe(deviceScriptTopic(defaultDomain, uniotClient.userId, prevValues.device.name))
       }
       await subscribeDeviceTopics()
     }
@@ -159,17 +182,17 @@ async function subscribeDeviceTopics() {
 
 function onStatusMessage(topic: string, message: Buffer, packet: IPublishPacket) {
   if (packet.retain) {
-    const status = CBOR.decode(message)
-    statusParsed.value = JSON.stringify(status, null, 2)
-    statusOnline.value = status.online
+    const status = decodeIntoJSON<MqttMessageDeviceStatus>(message, 'CBOR')
+    statusParsed.value = decodeIntoString(message, 'CBOR')
+    statusOnline.value = Boolean(status.online)
     statusTimestamp.value = new Date(status.timestamp * 1_000).toLocaleString()
   }
 }
 
 function onScriptMessage(topic: string, message: Buffer, packet: IPublishPacket) {
   if (packet.retain) {
-    const script = CBOR.decode(message)
-    scriptParsed.value = JSON.stringify(script, null, 2)
+    const script = decodeIntoJSON<MqttMessageDeviceScript>(message, 'CBOR')
+    scriptParsed.value = decodeIntoString(message, 'CBOR')
     scriptCode.value = script.code
     runtimeLabel.value = `${script.runtime}: ${script.version}`
     setFormatedScript(script.code)
@@ -190,13 +213,12 @@ async function createDeviceOracle() {
 }
 
 async function emulate() {
+  if (!emulatorAvailable.value) return
   emulation.value = true
-  EmulatorRef.value.emulate()
 }
 
 async function terminate() {
   emulation.value = false
-  EmulatorRef.value.terminate()
 }
 </script>
 
