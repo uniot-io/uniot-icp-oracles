@@ -12,6 +12,7 @@ import OracleTypes "OracleTypes";
 import Blob "mo:base/Blob";
 import Debug "mo:base/Debug";
 import Result "mo:base/Result";
+import Bool "mo:base/Bool";
 import CoseDecoder "Cose/Decoder";
 import CoseErrors "Cose/Errors";
 import CoseVerifier "Cose/Verifier";
@@ -34,6 +35,7 @@ actor {
 
   let broker = Broker.Broker(Env.BROKER_URL, Env.BROKER_PUB_KEY, transformBrokerResponse);
   var subscriptions : TrieMap.TrieMap<Text, OracleTypes.Subscription> = TrieMap.TrieMap<Text, OracleTypes.Subscription>(Text.equal, Text.hash);
+  var publications : TrieMap.TrieMap<Text, OracleTypes.Publication> = TrieMap.TrieMap<Text, OracleTypes.Publication>(Text.equal, Text.hash);
   var oracles : RBTree.RBTree<Nat, OracleTypes.Oracle> = RBTree.RBTree<Nat, OracleTypes.Oracle>(Nat.compare);
   var users : TrieMap.TrieMap<Principal, OracleTypes.User> = TrieMap.TrieMap<Principal, OracleTypes.User>(Principal.equal, Principal.hash);
   /*stable*/ var oraclesCounter : Nat = 0;
@@ -90,6 +92,29 @@ actor {
     }
   };
 
+  public shared (msg) func publish(oracleId : Nat, pub : [{ topic : Text; msg : Blob; msgType : Text; signed: Bool }]) {
+    let existingOracle = switch (oracles.get(oracleId)) {
+      case (null) return assert false;
+      case (?oracle) oracle
+    };
+
+    assert existingOracle.owner == msg.caller;
+    assert pub.size() > 0;
+
+    for (newPub in pub.vals()) {
+      assert newPub.topic != "";
+      assert newPub.msgType != "";
+
+      let newPublication = OracleTypes.Publication(newPub.topic, newPub.msg, newPub.msgType);
+      newPublication.timestamp := Time.now();
+      newPublication.oracleId := oracleId;
+      newPublication.signed := newPub.signed;
+      publications.put(newPub.topic, newPublication);
+
+      existingOracle.publish(newPublication)
+    }
+  };
+
   private func submitRetainedMessage(topic : Text, message : Blob, signed : Bool, verified : Bool) {
     switch (subscriptions.get(topic)) {
       case (null) {
@@ -105,7 +130,7 @@ actor {
     }
   };
 
-  public shared (msg) func syncOracle(oracleId : Nat) : async (Nat, Nat) {
+  public shared (msg) func syncOracle(oracleId : Nat, requestBrokerSig : Bool) : async (Nat, Nat) {
     let existingOracle = switch (oracles.get(oracleId)) {
       case (null) { assert false; return (0, 0) };
       case (?oracle) oracle
@@ -113,13 +138,20 @@ actor {
 
     assert existingOracle.owner == msg.caller;
 
-    await broker.handleRetainedMessages(existingOracle.getSubscriptionsIter(), true, submitRetainedMessage)
+    await broker.handleRetainedMessages(existingOracle.getSubscriptionsIter(), requestBrokerSig, submitRetainedMessage)
   };
 
   public query func getSubscription(topic : Text) : async ?OracleTypes.SubscriptionDto {
     switch (subscriptions.get(topic)) {
       case null null;
       case (?subscription) ?subscription.getDto()
+    }
+  };
+
+  public query func getPublication(topic : Text) : async ?OracleTypes.PublicationDto {
+    switch (publications.get(topic)) {
+      case null null;
+      case (?publication) ?publication.getDto()
     }
   };
 

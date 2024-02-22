@@ -98,9 +98,16 @@ async function onPublishMessage() {
 }
 
 async function onPublish(data: OraclePublication) {
+  loading.value = true
   const convertion = convertPublishPayloadByType(data.message, data.msgType)
   console.log('Publish via oracle:', convertion)
-  // await icpClient.actor?.publish(currentOracleId, convertion)
-  // currentView.value = 'oracle'
+  await icpClient.actor?.publish(currentOracleId.value, [{
+    topic: data.topic,
+    msg: new Uint8Array(convertion.payload),
+    msgType: convertion.type,
+    signed: data.signed,
+  }])
+  loading.value = false
+  currentView.value = 'oracle'
 }
 </script>

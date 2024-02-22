@@ -1,7 +1,7 @@
 import * as CBOR from 'cbor-web'
 import { MqttMessageType } from '@/types/mqtt'
 
-export function decodeMessage(byteArray: Buffer, dataType: MqttMessageType): string {
+export function decodeMessage(byteArray: Buffer, dataType: MqttMessageType): any {
   const textDecoded = new TextDecoder().decode(byteArray)
   try {
     switch (dataType.toLocaleLowerCase()) {
@@ -23,16 +23,20 @@ export function decodeIntoJSON<T>(byteArray: Buffer, dataType: MqttMessageType):
 }
 
 export function decodeIntoString(byteArray: Buffer, dataType: MqttMessageType): string {
-  return JSON.stringify(decodeMessage(byteArray, dataType), null, 2)
+  const decoded = decodeMessage(byteArray, dataType)
+  if (typeof decoded === 'string') {
+    return decoded
+  }
+  return JSON.stringify(decoded, null, 2)
 }
 
 export function convertPublishPayloadByType(
   value: string,
   type: MqttMessageType
-): { payload: string | Buffer; type: string } {
+): { payload: Buffer, type: string } {
   switch (type) {
     case 'CBOR':
-      return { payload: CBOR.encode(JSON.parse(value)), type: 'JSON as CBOR' }
+      return { payload: CBOR.encode(JSON.parse(value)), type }
     case 'JSON':
       return { payload: Buffer.from(JSON.stringify(JSON.parse(value))), type }
     case 'PlainText':

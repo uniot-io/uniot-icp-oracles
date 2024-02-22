@@ -69,7 +69,7 @@
           <el-tag v-else type="success">MQTT</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="Message" prop="message" min-width="500">
+      <el-table-column label="Message" prop="message" min-width="450">
         <template #default="scope">
           <el-text
             v-if="scope.row.showFullMessage || scope.row.message.length <= 82"
@@ -98,12 +98,19 @@
       <el-table-column label="Date" prop="date" width="200" />
       <el-table-column v-if="messagesSource === 'received'" label="Status" prop="status" width="120">
         <template #default="scope">
-          <el-tag v-if="scope.row.status" :type="statusTagType(scope.row.status)">{{ scope.row.status }}</el-tag>
+          <el-tag v-if="scope.row.status" :type="statusSubTagType(scope.row.status)">{{ scope.row.status }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="Security" prop="security" width="120">
+      <el-table-column v-else-if="messagesSource === 'published'" label="Origin" prop="status" width="120">
         <template #default="scope">
-          <el-tag :type="securityTagType(scope.row.security)">{{ scope.row.security }}</el-tag>
+          <el-tag v-if="scope.row.status" :type="statusPubTagType(scope.row.status)">{{ scope.row.status }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="Security" prop="security" width="130">
+        <template #default="scope">
+          <el-tag v-if="scope.row.security" :type="securityTagType(scope.row.security)">{{
+            scope.row.security
+          }}</el-tag>
         </template>
       </el-table-column>
     </el-table>
@@ -115,7 +122,7 @@ import { computed, onUnmounted, ref, watch } from 'vue'
 import { RefreshLeft, ArrowUpBold, ArrowDownBold, Position } from '@element-plus/icons-vue'
 import { Buffer } from 'buffer'
 import { IPublishPacket } from 'mqtt-packet'
-import { MqttMessageSecurity, MqttMessageStatus, MqttMessageType } from '@/types/mqtt'
+import { MqttMessageSecurity, MqttMessageStatus, MqttMessageOrigin, MqttMessageType } from '@/types/mqtt'
 import { OracleTemplateType } from '@/types/oracle'
 import { useIcpClientStore } from '@/store/IcpClient'
 import { useMqttStore } from '@/store/MqttStore'
@@ -145,6 +152,10 @@ interface GenericTopicData {
   security: MqttMessageSecurity
 }
 
+interface GenericPubTopicData extends GenericTopicData {
+  oracleId: bigint
+}
+
 interface GenericOracleTopicsViewProps {
   oracleId: bigint
   oracleTemplate: OracleTemplateType
@@ -172,7 +183,7 @@ const oracle = ref<OracleDto>()
 const canPublish = ref(false)
 const messagesSource = ref<MessagesSource>('received')
 const publications = ref<PublicationDto[]>([])
-const pubTopicData = ref<Map<string, GenericTopicData>>(new Map())
+const pubTopicData = ref<Map<string, GenericPubTopicData>>(new Map())
 const subscriptions = ref<SubscriptionDto[]>([])
 const subTopicData = ref<Map<string, GenericTopicData>>(new Map())
 const mqttTopicData = ref<Map<string, GenericTopicData>>(new Map())
@@ -218,6 +229,7 @@ const pubTableRowsData = computed<GenericTableRowData[]>(() => {
       topic: topic,
       message: decodeIntoString(data.message, data.msgType),
       security: data.security,
+      status: data.oracleId === oracle.value?.id ? 'actual' : 'foreign',
       showFullMessage: false
     }
     rows.push(row)
@@ -268,28 +280,35 @@ async function getOracleData(oracleId: bigint) {
       console.warn(`invalid data for topic: ${name}`)
       continue
     }
+    let security: MqttMessageSecurity = 'unsigned'
+    if (subscription[0].signed && subscription[0].verified) {
+      security = 'broker-signed'
+    } else if (subscription[0].signed && !subscription[0].verified) {
+      security = 'invalid-sig'
+    }
     subscriptions.value.push(subscription[0])
     subTopicData.value.set(subscription[0].topic, {
       date: subscription[0].timestamp ? new Date(Number(subscription[0].timestamp) / 1_000_000) : new Date(),
       message: Buffer.from(subscription[0].message),
       msgType: msgType as MqttMessageType,
       status: 'up-to-date',
-      security: 'unsecured'
+      security
     })
   }
   // get publications data
-  for (const [name, msgType] of oracle.value!.publications) {
-    const publication = await icpClient.actor?.getPublication(name)
+  for (const topic of oracle.value!.publications) {
+    const publication = await icpClient.actor?.getPublication(topic)
     if (!publication?.length) {
-      console.warn(`invalid data for topic: ${name}`)
+      console.warn(`invalid data for topic: ${topic}`)
       continue
     }
     publications.value.push(publication[0])
     pubTopicData.value.set(publication[0].topic, {
       date: publication[0].timestamp ? new Date(Number(publication[0].timestamp) / 1_000_000) : new Date(),
       message: Buffer.from(publication[0].message),
-      msgType: msgType as MqttMessageType,
-      security: publication[0].signed ? 'secured' : 'unsecured'
+      msgType: publication[0].messageType as MqttMessageType,
+      security: publication[0].signed ? 'icp-signed' : 'unsigned',
+      oracleId: publication[0].oracleId
     })
   }
 }
@@ -297,7 +316,7 @@ async function getOracleData(oracleId: bigint) {
 async function syncOracleData() {
   loading.value = true
   // @ts-expect-error
-  const [successfullUpdates, totalCyclesUsed] = await icpClient.actor?.syncOracle(props.oracleId)
+  const [successfullUpdates, totalCyclesUsed] = await icpClient.actor?.syncOracle(props.oracleId, true)
   console.log(`successfull updates: ${successfullUpdates}, total cycles used: ${totalCyclesUsed}`)
   await getOracleData(props.oracleId)
   loading.value = false
@@ -344,7 +363,7 @@ function onMqttTopicMessage(topic: string, message: Buffer, packet: IPublishPack
       message: message,
       msgType: sub[1] as MqttMessageType,
       status: msgStatus,
-      security: 'unsecured'
+      security: 'unsigned'
     })
   }
 }
@@ -361,7 +380,7 @@ function onChangeMessageSource(source: MessagesSource) {
   messagesSource.value = source
 }
 
-function statusTagType(status: MqttMessageStatus) {
+function statusSubTagType(status: MqttMessageStatus) {
   switch (status) {
     case 'up-to-date':
       return 'success'
@@ -372,12 +391,27 @@ function statusTagType(status: MqttMessageStatus) {
   }
 }
 
+function statusPubTagType(status: MqttMessageOrigin) {
+  switch (status) {
+    case 'actual':
+      return 'success'
+    case 'foreign':
+      return 'warning'
+    default:
+      return ''
+  }
+}
+
 function securityTagType(security: MqttMessageSecurity) {
   switch (security) {
-    case 'unsecured':
+    case 'unsigned':
       return 'warning'
-    case 'secured':
+    case 'icp-signed':
+    case 'broker-signed':
+    case 'device-signed':
       return 'success'
+    case 'invalid-sig':
+      return 'danger'
     default:
       return ''
   }

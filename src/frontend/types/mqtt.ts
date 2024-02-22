@@ -1,12 +1,14 @@
 import type { UniotDeviceData } from './uniot'
 
-export type MqttMessageType = 'JSON' | 'CBOR' | 'PlainText'
+export type MqttMessageType = 'CBOR' | 'JSON' | 'PlainText'
 
-export const MqttMessageTypes: MqttMessageType[] = ['JSON', 'CBOR', 'PlainText']
+export const MqttMessageTypes: MqttMessageType[] = ['CBOR', 'JSON', 'PlainText']
 
 export type MqttMessageStatus = 'up-to-date' | 'outdated'
 
-export type MqttMessageSecurity = 'unsecured' | 'secured'
+export type MqttMessageOrigin = 'actual' | 'foreign'
+
+export type MqttMessageSecurity = 'unsigned' | 'broker-signed' | 'device-signed' | 'icp-signed' | 'invalid-sig'
 
 export type MqttMessageDeviceEvent = {
   eventID: string

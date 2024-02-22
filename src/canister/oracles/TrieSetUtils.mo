@@ -21,6 +21,10 @@ module TrieSetUtils {
       return TrieSet.mem<T>(set, elem, hash, isEq)
     };
 
+    public func size() : Nat {
+      return TrieSet.size<T>(set)
+    };
+
     public func toArray() : [T] {
       return TrieSet.toArray<T>(set)
     };

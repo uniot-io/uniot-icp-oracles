@@ -18,12 +18,22 @@ module OracleTypes {
     refCount : Nat
   };
 
+  public type PublicationDto = {
+    topic : Text;
+    message : Blob;
+    messageType : Text;
+    signed : Bool;
+    timestamp : Int;
+    oracleId : Nat
+  };
+
   public type OracleDto = {
     id : Nat;
     owner : Principal;
     name : Text;
     template : Text;
-    subscriptions : [(Text, Text)]
+    subscriptions : [(Text, Text)];
+    publications : [Text]
   };
 
   public type UserDto = {
@@ -42,12 +52,24 @@ module OracleTypes {
     public func getDto() : SubscriptionDto { { topic; message; signed; verified; timestamp; refCount } }
   };
 
+  public class Publication(_topic : Text, _message : Blob, _messageType : Text) {
+    public let topic = _topic;
+    public let message = _message;
+    public let messageType = _messageType;
+    public var timestamp : Int = 0;
+    public var oracleId : Nat = 0;
+    public var signed : Bool = false;
+
+    public func getDto() : PublicationDto { { topic; message; messageType; signed; timestamp; oracleId } }
+  };
+
   public class Oracle(_id : Nat, _owner : Principal, _name : Text, _template : Text) {
     public let id = _id;
     public let owner = _owner;
     public let name = _name;
     public let template = _template;
     public let subscriptions = TrieMap.TrieMap<Text, Text>(Text.equal, Text.hash);
+    public let publications = TrieSetUtils.Set<Text>(Text.equal, Text.hash);
 
     public func getDto() : OracleDto {
       let subscriptionsArray = Array.init<(Text, Text)>(subscriptions.size(), ("", ""));
@@ -56,7 +78,14 @@ module OracleTypes {
         subscriptionsArray[i] := (key, value);
         i += 1
       };
-      { id; owner; name; template; subscriptions = Array.freeze<(Text, Text)>(subscriptionsArray) }
+      {
+        id;
+        owner;
+        name;
+        template;
+        subscriptions = Array.freeze<(Text, Text)>(subscriptionsArray);
+        publications = publications.toArray()
+      }
     };
 
     public func getSubscriptionsIter() : I.Iter<Text> {
@@ -66,6 +95,10 @@ module OracleTypes {
     public func subscribe(subscription : Subscription, messageType : Text) {
       subscriptions.put(subscription.topic, messageType);
       subscription.refCount += 1
+    };
+
+    public func publish(publication : Publication) {
+      publications.put(publication.topic)
     }
   };
 
