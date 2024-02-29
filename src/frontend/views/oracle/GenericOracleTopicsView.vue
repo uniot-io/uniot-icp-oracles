@@ -363,7 +363,7 @@ function onMqttTopicMessage(topic: string, message: Buffer, packet: IPublishPack
       message: message,
       msgType: sub[1] as MqttMessageType,
       status: msgStatus,
-      security: 'unsigned'
+      security: null
     })
   }
 }

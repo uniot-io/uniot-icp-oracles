@@ -92,27 +92,37 @@ actor {
     }
   };
 
-  public shared (msg) func publish(oracleId : Nat, pub : [{ topic : Text; msg : Blob; msgType : Text; signed: Bool }]) {
+  public shared (msg) func publish(oracleId : Nat, pub : [{ topic : Text; msg : Blob; msgType : Text; signed : Bool }]) : async (Nat, Nat) {
     let existingOracle = switch (oracles.get(oracleId)) {
-      case (null) return assert false;
+      case (null) { assert false; return (0, 0) };
       case (?oracle) oracle
     };
 
     assert existingOracle.owner == msg.caller;
     assert pub.size() > 0;
 
+    var successfullUpdates : Nat = 0;
+    var totalCyclesUsed : Nat = 0;
+
     for (newPub in pub.vals()) {
-      assert newPub.topic != "";
-      assert newPub.msgType != "";
+      if (newPub.topic != "" and newPub.msgType != "") { // empty message is allowed
+        let (success, cyclesUsed) = await broker.publishRetainedMessage(newPub.topic, newPub.msg);
+        totalCyclesUsed += cyclesUsed;
 
-      let newPublication = OracleTypes.Publication(newPub.topic, newPub.msg, newPub.msgType);
-      newPublication.timestamp := Time.now();
-      newPublication.oracleId := oracleId;
-      newPublication.signed := newPub.signed;
-      publications.put(newPub.topic, newPublication);
+        if (success) {
+          let newPublication = OracleTypes.Publication(newPub.topic, newPub.msg, newPub.msgType);
+          newPublication.timestamp := Time.now();
+          newPublication.oracleId := oracleId;
+          newPublication.signed := true; // newPub.signed; // force signed for now
+          publications.put(newPub.topic, newPublication);
+          existingOracle.publish(newPublication);
 
-      existingOracle.publish(newPublication)
-    }
+          successfullUpdates += 1
+        }
+      }
+    };
+
+    (successfullUpdates, totalCyclesUsed)
   };
 
   private func submitRetainedMessage(topic : Text, message : Blob, signed : Bool, verified : Bool) {
@@ -228,6 +238,19 @@ actor {
         #ok(Hex.encode(bytes))
       };
       case (#err e) #err e
+    }
+  };
+
+  public func publishRetainedMessage(topic : Text, payload : Text) : async (Bool, Nat) {
+    await broker.publishRetainedMessage(topic, Text.encodeUtf8(payload))
+  };
+
+  public func brokerPublicKey() : async Text {
+    switch (await broker.getSignerPublicKey()) {
+      case (#ok key) Hex.encode(key);
+      case (#err e) switch (e) {
+        case (#msg(m)) m
+      }
     }
   }
 }
