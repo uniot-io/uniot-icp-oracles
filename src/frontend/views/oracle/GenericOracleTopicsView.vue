@@ -180,7 +180,7 @@ const icpClient = useIcpClientStore()
 const mqttClient = useMqttStore()
 const loading = ref(true)
 const oracle = ref<OracleDto>()
-const canPublish = ref(false)
+const canPublish = ref(true)
 const messagesSource = ref<MessagesSource>('received')
 const publications = ref<PublicationDto[]>([])
 const pubTopicData = ref<Map<string, GenericPubTopicData>>(new Map())
@@ -254,7 +254,7 @@ watch(
     subscriptions.value = []
     publications.value = []
     messagesSource.value = 'received'
-    canPublish.value = current.oracleTemplate === 'generic'
+    // canPublish.value = current.oracleTemplate === 'generic'
     await getOracleData(current.oracleId)
     await subscribeTopics()
     loading.value = false
