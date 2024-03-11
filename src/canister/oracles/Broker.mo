@@ -128,10 +128,10 @@ module Broker {
     }
   };
 
-  public class Broker(_host : Text, _remotePublicKey : Text, _transform : shared query HttpTypes.TransformArgs -> async HttpTypes.HttpResponsePayload) {
+  public class Broker(_host : Text, key : Signer.Key, _remotePublicKey : Text, _transform : shared query HttpTypes.TransformArgs -> async HttpTypes.HttpResponsePayload) {
     let urlBuilder : UrlBuilder = UrlBuilder(_host);
     let remotePublicKey : [Nat8] = Hex.unsafeDecode(_remotePublicKey);
-    let signer = Signer.SECP256K1(Text.encodeUtf8("UNIOT"), #development);
+    let signer = Signer.SECP256K1(Text.encodeUtf8("UNIOT"), key);
     let client : HttpClient = HttpClient(_transform);
     let expectedResponseBytes : Nat64 = 2 * 1024;
     let maxCycles = 200_000_000_000;

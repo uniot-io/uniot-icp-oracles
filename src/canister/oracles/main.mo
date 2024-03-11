@@ -33,7 +33,7 @@ actor {
     Broker.transformResponse(raw)
   };
 
-  let broker = Broker.Broker(Env.BROKER_URL, Env.BROKER_PUB_KEY, transformBrokerResponse);
+  let broker = Broker.Broker(Env.BROKER_URL, Env.SIGNER_KEY_TYPE, Env.BROKER_PUB_KEY, transformBrokerResponse);
   var subscriptions : TrieMap.TrieMap<Text, OracleTypes.Subscription> = TrieMap.TrieMap<Text, OracleTypes.Subscription>(Text.equal, Text.hash);
   var publications : TrieMap.TrieMap<Text, OracleTypes.Publication> = TrieMap.TrieMap<Text, OracleTypes.Publication>(Text.equal, Text.hash);
   var oracles : RBTree.RBTree<Nat, OracleTypes.Oracle> = RBTree.RBTree<Nat, OracleTypes.Oracle>(Nat.compare);
@@ -213,39 +213,39 @@ actor {
     }
   };
 
-  let init = Text.encodeUtf8("UNIOT");
-  let signer = Signer.SECP256K1(init, #development);
+  // let init = Text.encodeUtf8("UNIOT");
+  // let signer = Signer.SECP256K1(init, #development);
 
-  public shared (msg) func public_key() : async Result.Result<Text, CoseErrors.Error> {
-    switch (await signer.publicKey()) {
-      case (#ok key) #ok(Hex.encode(key));
-      case (#err e) #err e
-    }
-  };
+  // public shared (msg) func public_key() : async Result.Result<Text, CoseErrors.Error> {
+  //   switch (await signer.publicKey()) {
+  //     case (#ok key) #ok(Hex.encode(key));
+  //     case (#err e) #err e
+  //   }
+  // };
 
-  public shared (msg) func sign(message : Text) : async Result.Result<Text, CoseErrors.Error> {
-    switch (Hex.decode(message)) {
-      case (#ok bytes) {
-        switch (await signer.sign(bytes)) {
-          case (#ok signature) #ok(Hex.encode(signature));
-          case (#err e) #err e
-        }
-      };
-      case (#err e) #err e
-    }
-  };
+  // public shared (msg) func sign(message : Text) : async Result.Result<Text, CoseErrors.Error> {
+  //   switch (Hex.decode(message)) {
+  //     case (#ok bytes) {
+  //       switch (await signer.sign(bytes)) {
+  //         case (#ok signature) #ok(Hex.encode(signature));
+  //         case (#err e) #err e
+  //       }
+  //     };
+  //     case (#err e) #err e
+  //   }
+  // };
 
-  public shared (msg) func signCose(payload : Text) : async Result.Result<Text, CoseErrors.Error> {
-    let payloadBytes = Blob.toArray(Text.encodeUtf8(payload));
-    let message = CoseUtils.Sign1Message.new(payloadBytes, #map([]));
-    switch (await Encoder.encode(#sign1(message), signer, [])) {
-      case (#ok(bytes)) {
-        Debug.print(debug_show (message));
-        #ok(Hex.encode(bytes))
-      };
-      case (#err e) #err e
-    }
-  };
+  // public shared (msg) func signCose(payload : Text) : async Result.Result<Text, CoseErrors.Error> {
+  //   let payloadBytes = Blob.toArray(Text.encodeUtf8(payload));
+  //   let message = CoseUtils.Sign1Message.new(payloadBytes, #map([]));
+  //   switch (await Encoder.encode(#sign1(message), signer, [])) {
+  //     case (#ok(bytes)) {
+  //       Debug.print(debug_show (message));
+  //       #ok(Hex.encode(bytes))
+  //     };
+  //     case (#err e) #err e
+  //   }
+  // };
 
   public func publishRetainedMessage(topic : Text, payload : Text) : async (Bool, Nat) {
     await broker.publishRetainedMessage(topic, Text.encodeUtf8(payload))

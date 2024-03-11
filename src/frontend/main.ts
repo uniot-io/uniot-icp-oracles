@@ -28,6 +28,6 @@ app.use(hljsVuePlugin)
 app.use(createPinia())
 app.use(router)
 app.use(VueMonacoEditorPlugin, {
-  paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' }
+  paths: { vs: 'https://ddnt2-iiaaa-aaaan-qeceq-cai.icp0.io/monaco-editor/min/vs' }
 })
 app.mount('#app')
