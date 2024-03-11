@@ -75,7 +75,7 @@ export default defineConfig({
     'process.env': process.env
   },
   server: {
-    port: 8080,
+    port: 8081,
     proxy: {
       '/api': {
         target: REPLICA_URL,

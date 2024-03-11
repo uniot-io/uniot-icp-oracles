@@ -29,6 +29,7 @@ module OracleTypes {
 
   public type OracleDto = {
     id : Nat;
+    registrar : Principal;
     owner : Principal;
     name : Text;
     template : Text;
@@ -63,8 +64,9 @@ module OracleTypes {
     public func getDto() : PublicationDto { { topic; message; messageType; signed; timestamp; oracleId } }
   };
 
-  public class Oracle(_id : Nat, _owner : Principal, _name : Text, _template : Text) {
+  public class Oracle(_id : Nat, _registrar : Principal, _owner : Principal, _name : Text, _template : Text) {
     public let id = _id;
+    public let registrar = _registrar;
     public let owner = _owner;
     public let name = _name;
     public let template = _template;
@@ -80,6 +82,7 @@ module OracleTypes {
       };
       {
         id;
+        registrar;
         owner;
         name;
         template;

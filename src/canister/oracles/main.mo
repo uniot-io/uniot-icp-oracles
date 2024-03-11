@@ -41,20 +41,26 @@ actor {
   /*stable*/ var oraclesCounter : Nat = 0;
 
   public shared (msg) func createOracle(name : Text, template : Text) : async Nat {
+    return await registerOracle(msg.caller, name, template)
+  };
+
+  public shared (msg) func registerOracle(owner: Principal, name : Text, template : Text) : async Nat {
     // assert not Principal.isAnonymous(msg.caller);
+    // assert not Principal.isAnonymous(owner);
     assert name != "";
     assert template != "";
 
-    let user = switch (users.get(msg.caller)) {
+    let registrar = msg.caller;
+    let user = switch (users.get(owner)) {
       case (null) {
-        let newUser = OracleTypes.User(msg.caller);
-        users.put(msg.caller, newUser);
+        let newUser = OracleTypes.User(owner);
+        users.put(owner, newUser);
         newUser
       };
       case (?existingUser) existingUser
     };
 
-    let newOracle = OracleTypes.Oracle(oraclesCounter, msg.caller, name, template);
+    let newOracle = OracleTypes.Oracle(oraclesCounter, registrar, owner, name, template);
     user.putOracle(newOracle);
     oracles.put(newOracle.id, newOracle);
     oraclesCounter += 1;
@@ -68,7 +74,7 @@ actor {
       case (?oracle) oracle
     };
 
-    assert existingOracle.owner == msg.caller;
+    assert existingOracle.owner == msg.caller or existingOracle.registrar == msg.caller;
     assert subs.size() > 0;
 
     for (newSub in subs.vals()) {
@@ -98,7 +104,7 @@ actor {
       case (?oracle) oracle
     };
 
-    assert existingOracle.owner == msg.caller;
+    assert existingOracle.owner == msg.caller or existingOracle.registrar == msg.caller;
     assert pub.size() > 0;
 
     var successfullUpdates : Nat = 0;
@@ -146,7 +152,7 @@ actor {
       case (?oracle) oracle
     };
 
-    assert existingOracle.owner == msg.caller;
+    assert existingOracle.owner == msg.caller or existingOracle.registrar == msg.caller;
 
     await broker.handleRetainedMessages(existingOracle.getSubscriptionsIter(), requestBrokerSig, submitRetainedMessage)
   };
@@ -165,7 +171,7 @@ actor {
     }
   };
 
-  public query func getOracle(oracleId : Nat) : async ?OracleTypes.OracleDto {
+  public shared query func getOracle(oracleId : Nat) : async ?OracleTypes.OracleDto {
     switch (oracles.get(oracleId)) {
       case null null;
       case (?oracle) ?oracle.getDto()

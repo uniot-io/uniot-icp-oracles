@@ -110,7 +110,7 @@ const scriptTopic = computed(() => deviceScriptTopic(defaultDomain, uniotClient.
 
 const emulatorAvailable = computed(() => {
   let available = true
-  props.device.data.primitives.forEach((p) => {
+  props.device?.data.primitives.forEach((p) => {
     if (!UniotGenericDevicePrimitives.includes(p)) {
       available = false
     }

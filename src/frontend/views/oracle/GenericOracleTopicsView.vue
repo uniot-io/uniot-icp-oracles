@@ -135,7 +135,7 @@ interface TableRowData {
   topic?: string
   message: string
   status?: string
-  security: string
+  security?: string
   showFullMessage: boolean
   isChild?: boolean
 }
@@ -149,7 +149,7 @@ interface GenericTopicData {
   message: Buffer
   msgType: MqttMessageType
   status?: MqttMessageStatus
-  security: MqttMessageSecurity
+  security?: MqttMessageSecurity
 }
 
 interface GenericPubTopicData extends GenericTopicData {
@@ -362,8 +362,7 @@ function onMqttTopicMessage(topic: string, message: Buffer, packet: IPublishPack
       date: new Date(),
       message: message,
       msgType: sub[1] as MqttMessageType,
-      status: msgStatus,
-      security: null
+      status: msgStatus
     })
   }
 }

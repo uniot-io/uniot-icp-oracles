@@ -45,7 +45,7 @@ export const useUniotStore = defineStore('uniotStore', () => {
       const subscription = wsConnection.value.subscribe('guest')
       subscription.on('me:res', (data: any) => {
         subscription.close()
-        resolve(data.hash)
+        resolve(data.cid)
       })
       subscription.emit('me', { providerId: principal })
     })

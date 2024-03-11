@@ -124,7 +124,7 @@ onMounted(() => {
         pins: AVAILABLE_PRIMITIVES[primitiveName].keyInDevice
           ? Array.from(
               {
-                length: props.device.data[AVAILABLE_PRIMITIVES[primitiveName].keyInDevice!] ?? 0
+                length: props.device?.data[AVAILABLE_PRIMITIVES[primitiveName].keyInDevice!] ?? 0
               },
               (_, i) => i
             )

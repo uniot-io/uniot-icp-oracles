@@ -12,7 +12,7 @@
       style="padding-top: 10px"
     />
     <template v-if="isCurrentOracleExisted">
-      <generic-oracle-topics-view v-if="selectedView === oracleViews[0]" :oracleId="currentOracleId" />
+      <generic-oracle-topics-view v-if="selectedView === oracleViews[0]" :oracleId="currentOracleId" oracle-template="uniot_device" />
       <uniot-oracle-device-view
         v-else
         class="un-inner-right"
