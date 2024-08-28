@@ -1,4 +1,4 @@
-import Env "mo:env";
+import Env "../Env";
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
 import Time "mo:base/Time";

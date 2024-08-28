@@ -33,7 +33,7 @@ function initEnv() {
       : 'https://identity.ic0.app'
   process.env['VITE_APP_II_DERIVATION'] =
     DFX_NETWORK === 'local'
-      ? 'https://2vxsx-fae.icp0.io'
+      ? `http://${canisters['oracles_frontend'][DFX_NETWORK]}.localhost:4943`
       : `https://${canisters['oracles_frontend'][DFX_NETWORK]}.icp0.io`
 
   console.log('Use the following .env vars to integrate Internet Identity:')
