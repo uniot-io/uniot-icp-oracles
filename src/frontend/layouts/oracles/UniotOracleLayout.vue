@@ -12,7 +12,11 @@
       style="padding-top: 10px"
     />
     <template v-if="isCurrentOracleExisted">
-      <generic-oracle-topics-view v-if="selectedView === oracleViews[0]" :oracleId="currentOracleId" oracle-template="uniot_device" />
+      <generic-oracle-topics-view
+        v-if="selectedView === oracleViews[0]"
+        :oracleId="currentOracleId"
+        oracle-template="uniot_device"
+      />
       <uniot-oracle-device-view
         v-else
         class="un-inner-right"
@@ -126,7 +130,7 @@ function onDeviceMessage(topic: string, message: Buffer, packet: IPublishPacket)
   if (packet.retain) {
     const { deviceId } = parseDeviceTopic(topic)
     const intDeviceId = calcDeviceId(deviceId)
-    const messageDecoded = decodeIntoJSON<UniotDeviceData>(message, 'CBOR')
+    const messageDecoded = decodeIntoJSON<UniotDeviceData>(message, 'COSE')
     uniotDevices.value.set(intDeviceId, { name: deviceId, data: messageDecoded })
     if (currentOracleId.value === ZERO_ORACLE_ID) {
       currentOracleId.value = intDeviceId

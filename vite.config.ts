@@ -2,6 +2,7 @@ import path from 'path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import ElementPlus from 'unplugin-element-plus/vite'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 const DFX_NETWORK = process.env.DFX_NETWORK || 'local'
 const REPLICA_URL = DFX_NETWORK === 'local' ? 'http://localhost:4943' : 'https://ic0.app'
@@ -28,9 +29,7 @@ function initEnv() {
   }
 
   process.env['VITE_APP_II_URL'] =
-    DFX_NETWORK === 'local'
-      ? 'http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943'
-      : 'https://identity.ic0.app'
+    DFX_NETWORK === 'local' ? 'http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943' : 'https://identity.ic0.app'
   process.env['VITE_APP_II_DERIVATION'] =
     DFX_NETWORK === 'local'
       ? `http://${canisters['oracles_frontend'][DFX_NETWORK]}.localhost:4943`
@@ -69,7 +68,8 @@ export default defineConfig({
     // For future refactoring to use components on demand.
     ElementPlus({
       useSource: true
-    })
+    }),
+    nodePolyfills({ protocolImports: true })
   ],
   define: {
     'process.env': process.env

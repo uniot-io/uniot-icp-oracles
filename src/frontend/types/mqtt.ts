@@ -1,8 +1,8 @@
 import type { UniotDeviceData } from './uniot'
 
-export type MqttMessageType = 'CBOR' | 'JSON' | 'PlainText'
+export type MqttMessageType = 'COSE' | 'CBOR' | 'JSON' | 'PlainText'
 
-export const MqttMessageTypes: MqttMessageType[] = ['CBOR', 'JSON', 'PlainText']
+export const MqttMessageTypes: MqttMessageType[] = ['COSE', 'CBOR', 'JSON', 'PlainText']
 
 export type MqttMessageStatus = 'up-to-date' | 'outdated'
 

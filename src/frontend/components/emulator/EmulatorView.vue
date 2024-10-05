@@ -151,7 +151,7 @@ async function subscribeEmulatorTopics() {
 }
 
 function onEmulatorMessage(topic: string, message: Buffer) {
-  const data = decodeIntoJSON<MqttMessageDeviceEvent>(message, 'CBOR')
+  const data = decodeIntoJSON<MqttMessageDeviceEvent>(message, 'COSE')
   if (events.has(data.eventID)) {
     const eventValues = events.get(data.eventID)!
     eventValues.push(data.value)
