@@ -59,6 +59,7 @@ import GenericOracleTopicsView from '@/views/oracle/GenericOracleTopicsView.vue'
 import { UniotDevice, UniotDeviceData } from '@/types/uniot'
 import { OracleTemplate } from '@/types/oracle'
 import { decodeIntoJSON } from '@/utils/msgDecoder'
+import { MqttMessageUniotDeviceStatus, MqttMessageTypes } from '@/types/mqtt'
 
 const ZERO_ORACLE_ID = -1n
 const icpClient = useIcpClientStore()
@@ -112,7 +113,7 @@ async function loadUserOracles() {
       .map(({ id, name, template }) => ({ id, name, template }))
     existingOracles.value = new Map(oracles.map((oracle) => [oracle.id, oracle]))
     if (currentOracleId.value === ZERO_ORACLE_ID && existingOracles.value.size) {
-      currentOracleId.value = existingOracles.value.keys().next().value
+      currentOracleId.value = existingOracles.value.keys().next().value!
     }
   }
 }
@@ -130,8 +131,9 @@ function onDeviceMessage(topic: string, message: Buffer, packet: IPublishPacket)
   if (packet.retain) {
     const { deviceId } = parseDeviceTopic(topic)
     const intDeviceId = calcDeviceId(deviceId)
-    const messageDecoded = decodeIntoJSON<UniotDeviceData>(message, 'COSE')
-    uniotDevices.value.set(intDeviceId, { name: deviceId, data: messageDecoded })
+    const messageDecoded = decodeIntoJSON<MqttMessageUniotDeviceStatus>(message, MqttMessageTypes[0])
+    const deviceData = updateDeviceData(deviceId, messageDecoded)
+    uniotDevices.value.set(intDeviceId, { name: deviceId, data: deviceData })
     if (currentOracleId.value === ZERO_ORACLE_ID) {
       currentOracleId.value = intDeviceId
     }
@@ -154,5 +156,24 @@ async function onSelectOracle({ oracleId, view }: { oracleId: bigint; view: stri
 
 function calcDeviceId(deviceId: string): bigint {
   return BigInt(`0x${deviceId}`)
+}
+
+function updateDeviceData(cid: string, data: MqttMessageUniotDeviceStatus) {
+  const res: UniotDeviceData = {
+    cid,
+    name: cid.toLocaleUpperCase(),
+    timestamp: +data.timestamp * 1000,
+    connection_id: data.connection_id,
+    creator: data.creator,
+    public_key: data.public_key,
+    online: data.online,
+    primitives: Object.keys(data.primitives),
+    description: JSON.stringify(Object.keys(data.primitives)),
+    d_in: 3,
+    d_out: 3,
+    a_in: 1,
+    a_out: 3
+  }
+  return res
 }
 </script>

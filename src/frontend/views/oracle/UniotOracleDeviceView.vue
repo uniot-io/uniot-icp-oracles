@@ -70,7 +70,7 @@ import { beautify } from '@/utils/lisp/format'
 import { decodeIntoJSON, decodeIntoString } from '@/utils/msgDecoder'
 import { UniotDevice, UniotGenericDevicePrimitives } from '@/types/uniot'
 import { OracleTemplate } from '@/types/oracle'
-import { MqttMessageDeviceScript, MqttMessageDeviceStatus } from '@/types/mqtt'
+import { MqttMessageTypes, MqttMessageUniotDeviceScript, MqttMessageUniotDeviceStatus } from '@/types/mqtt'
 import { initLineNumbersOnLoad } from '@/utils/highlightjs-line-numbers'
 import EmulatorView from '@/components/emulator/EmulatorView.vue'
 
@@ -182,8 +182,8 @@ async function subscribeDeviceTopics() {
 
 function onStatusMessage(topic: string, message: Buffer, packet: IPublishPacket) {
   if (packet.retain) {
-    const status = decodeIntoJSON<MqttMessageDeviceStatus>(message, 'CBOR')
-    statusParsed.value = decodeIntoString(message, 'CBOR')
+    const status = decodeIntoJSON<MqttMessageUniotDeviceStatus>(message, MqttMessageTypes[0])
+    statusParsed.value = decodeIntoString(message, MqttMessageTypes[0])
     statusOnline.value = Boolean(status.online)
     statusTimestamp.value = new Date(status.timestamp * 1_000).toLocaleString()
   }
@@ -191,8 +191,8 @@ function onStatusMessage(topic: string, message: Buffer, packet: IPublishPacket)
 
 function onScriptMessage(topic: string, message: Buffer, packet: IPublishPacket) {
   if (packet.retain) {
-    const script = decodeIntoJSON<MqttMessageDeviceScript>(message, 'CBOR')
-    scriptParsed.value = decodeIntoString(message, 'CBOR')
+    const script = decodeIntoJSON<MqttMessageUniotDeviceScript>(message, MqttMessageTypes[0])
+    scriptParsed.value = decodeIntoString(message, MqttMessageTypes[0])
     scriptCode.value = script.code
     runtimeLabel.value = `${script.runtime}: ${script.version}`
     setFormatedScript(script.code)
@@ -201,7 +201,10 @@ function onScriptMessage(topic: string, message: Buffer, packet: IPublishPacket)
 
 async function createDeviceOracle() {
   loading.value = true
-  const topics = [statusTopic.value, scriptTopic.value].map((topic) => ({ topic, msgType: 'cbor' }))
+  const topics = [statusTopic.value, scriptTopic.value].map((topic) => ({
+    topic,
+    msgType: MqttMessageTypes[0].toLocaleLowerCase()
+  }))
   try {
     const newOracleId = await icpClient.actor?.createOracle(props.device.name, OracleTemplate.uniotDevice)
     await icpClient.actor?.subscribe(newOracleId!, topics)
