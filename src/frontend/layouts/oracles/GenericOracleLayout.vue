@@ -10,12 +10,8 @@
         :grouping="true"
         @select="onSelectOracle"
       />
-      <generic-oracle-create-view
-        class="un-inner-right"
-        v-if="currentView === 'create'"
-        @submit="onCreateOrUpdateOracle"
-      />
-      <generic-oracle-topics-view
+      <oracle-create-view class="un-inner-right" v-if="currentView === 'create'" @submit="onCreateOrUpdateOracle" />
+      <oracle-topics-view
         class="un-inner-right"
         v-else-if="currentView === 'oracle'"
         :oracleId="currentOracleId"
@@ -36,9 +32,9 @@ import { ElMessage } from 'element-plus'
 import { OraclePublication, OracleSettings } from '@/types/oracle'
 import { useIcpClientStore } from '@/store/IcpClient'
 import OracleMenu, { OracleMenuItem } from '@/components/oracle/OracleMenu.vue'
-import GenericOracleCreateView from '@/views/oracle/GenericOracleCreateView.vue'
-import GenericOracleTopicsView from '@/views/oracle/GenericOracleTopicsView.vue'
-import OraclePublishView from '@/views/oracle/OraclePublishView.vue'
+import OracleCreateView from '@/views/oracle/generic/OracleCreateView.vue'
+import OracleTopicsView from '@/views/oracle/common/OracleTopicsView.vue'
+import OraclePublishView from '@/views/oracle/common/OraclePublishView.vue'
 import { convertPublishPayloadByType } from '@/utils/msgDecoder'
 import { OracleTemplateType } from '@/types/oracle'
 

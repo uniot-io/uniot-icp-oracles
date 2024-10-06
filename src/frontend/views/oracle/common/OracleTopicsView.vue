@@ -315,10 +315,25 @@ async function getOracleData(oracleId: bigint) {
 
 async function syncOracleData() {
   loading.value = true
-  // @ts-expect-error
-  const [successfullUpdates, totalCyclesUsed] = await icpClient.actor?.syncOracle(props.oracleId, true)
-  console.log(`successfull updates: ${successfullUpdates}, total cycles used: ${totalCyclesUsed}`)
-  await getOracleData(props.oracleId)
+  if (icpClient.actor) {
+    try {
+      const [successfullUpdates, totalCyclesUsed] = await icpClient.actor.syncOracle(props.oracleId, true)
+      console.log(`successfull updates: ${successfullUpdates}, total cycles used: ${totalCyclesUsed}`)
+      await getOracleData(props.oracleId)
+    } catch (error) {
+      console.warn(error)
+      // TODO: show message (ElMessage.error())
+    }
+  } else {
+    // TODO: show message (ElMessage.error())
+  }
+  // try {
+  //   const [successfullUpdates, totalCyclesUsed] = await icpClient.actor.syncOracle(props.oracleId, true)
+  //   console.log(`successfull updates: ${successfullUpdates}, total cycles used: ${totalCyclesUsed}`)
+  //   await getOracleData(props.oracleId)
+  // } catch (error) {
+  //   //
+  // }
   loading.value = false
 }
 
@@ -356,6 +371,9 @@ function onMqttTopicMessage(topic: string, message: Buffer, packet: IPublishPack
   }
   if (packet.retain) {
     const subMsg = subTopicData.value.get(topic)!
+    // FIXME:
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     const msgStatus = subMsg.message.compare(message) === 0 ? 'up-to-date' : 'outdated'
     subMsg.status = msgStatus
     mqttTopicData.value.set(topic, {
