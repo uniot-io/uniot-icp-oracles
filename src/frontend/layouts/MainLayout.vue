@@ -46,11 +46,11 @@
 import logo from '@/assets/logo.svg'
 import { onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useIcpClientStore } from '@/store/IcpClient'
-import { useUniotStore } from '@/store/UniotStore'
+import { useIcpStore } from '@/stores/IcpStore'
+import { useUniotStore } from '@/oracles/uniot-device/stores/UniotStore'
 
 const route = useRoute()
-const icpClient = useIcpClientStore()
+const icpClient = useIcpStore()
 const uniotClient = useUniotStore()
 
 onMounted(() => {

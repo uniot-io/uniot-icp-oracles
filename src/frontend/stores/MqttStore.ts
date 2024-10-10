@@ -4,6 +4,7 @@ import * as mqtt from 'mqtt/dist/mqtt.min'
 import mqttMatch from 'mqtt-match'
 import { IPublishPacket } from 'mqtt-packet'
 import { Buffer } from 'buffer'
+// import { defaultDomain } from '@/utils/mqttTopics'
 
 export type MqttMessageCallback = (topic: string, data: Buffer, packet: IPublishPacket) => void
 
@@ -88,7 +89,10 @@ export const useMqttStore = defineStore('mqttStore', () => {
 
   function _onMessage(topic: string, message: Buffer, packet: IPublishPacket) {
     for (const [subTopic, callback] of subscriptions) {
+      // TODO: how it worked earlier?
+      // if (mqttMatch(subTopic, topic) || mqttMatch(`${defaultDomain}${subTopic}`, topic)) {
       if (mqttMatch(subTopic, topic)) {
+        // callback(subTopic, message, packet)
         callback(topic, message, packet)
       }
     }

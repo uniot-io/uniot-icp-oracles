@@ -36,7 +36,7 @@ function getHljsLnTable(hljsLnDomElt) {
 // rendered code in the DOM as reference.
 function edgeGetSelectedCodeLines(selection) {
   // current selected text without line breaks
-  let selectionText = selection.toString()
+  const selectionText = selection.toString()
 
   // get the <td> element wrapping the first line of selected code
   let tdAnchor = selection.anchorNode
@@ -81,10 +81,10 @@ function edgeGetSelectedCodeLines(selection) {
 
     // reconstruct and return the real copied text
     let selectedText = firstLineText
-    let hljsLnTable = getHljsLnTable(tdAnchor)
+    const hljsLnTable = getHljsLnTable(tdAnchor)
     for (let i = firstLineNumber + 1; i < lastLineNumber; ++i) {
-      let codeLineSel = format('.{0}[{1}="{2}"]', [CODE_BLOCK_NAME, DATA_ATTR_NAME, i])
-      let codeLineElt = hljsLnTable.querySelector(codeLineSel)
+      const codeLineSel = format('.{0}[{1}="{2}"]', [CODE_BLOCK_NAME, DATA_ATTR_NAME, i])
+      const codeLineElt = hljsLnTable.querySelector(codeLineSel)
       selectedText += '\n' + codeLineElt.textContent
     }
     selectedText += '\n' + lastLineText
@@ -99,7 +99,7 @@ function edgeGetSelectedCodeLines(selection) {
 // (see https://github.com/wcoder/highlightjs-line-numbers.js/issues/51)
 document.addEventListener('copy', function (e) {
   // get current selection
-  let selection = window.getSelection()
+  const selection = window.getSelection()
   // override behavior when one wants to copy line of codes
   if (isHljsLnCodeDescendant(selection.anchorNode)) {
     let selectionText
@@ -117,7 +117,7 @@ document.addEventListener('copy', function (e) {
 })
 
 function addStyles() {
-  let css = document.createElement('style')
+  const css = document.createElement('style')
   css.type = 'text/css'
   css.innerHTML = format('.{0}{border-collapse:collapse}' + '.{0} td{padding:0}' + '.{1}:before{content:attr({2})}', [
     TABLE_NAME,
@@ -139,9 +139,9 @@ function initLineNumbersOnLoad(options) {
 
 function documentReady(options) {
   try {
-    let blocks = document.querySelectorAll('code.hljs,code.nohighlight')
-    for (let i in blocks) {
-      if (blocks.hasOwnProperty(i)) {
+    const blocks = document.querySelectorAll('code.hljs,code.nohighlight')
+    for (const i in blocks) {
+      if (Object.hasOwn(blocks, i)) {
         if (!isPluginDisabledForBlock(blocks[i])) {
           lineNumbersBlock(blocks[i], options)
         }
@@ -165,14 +165,14 @@ function lineNumbersBlock(element, options) {
 function lineNumbersValue(value, options) {
   if (typeof value !== 'string') return
 
-  let element = document.createElement('code')
+  const element = document.createElement('code')
   element.innerHTML = value
 
   return lineNumbersInternal(element, options)
 }
 
 function lineNumbersInternal(element, options) {
-  let internalOptions = mapOptions(element, options)
+  const internalOptions = mapOptions(element, options)
 
   duplicateMultilineNodes(element)
 
@@ -180,7 +180,7 @@ function lineNumbersInternal(element, options) {
 }
 
 function addLineNumbersBlockFor(inputHtml, options) {
-  let lines = getLines(inputHtml)
+  const lines = getLines(inputHtml)
 
   // if last line contains only carriage return remove it
   if (lines[lines.length - 1]?.trim() === '') {
@@ -232,15 +232,15 @@ function mapOptions(element, options) {
 }
 
 function getSingleLineOption(options) {
-  let defaultValue = false
-  if (!!options.singleLine) {
+  const defaultValue = false
+  if (options.singleLine) {
     return options.singleLine
   }
   return defaultValue
 }
 
 function getStartFromOption(element, options) {
-  let defaultValue = 1
+  const defaultValue = 1
   let startFrom = defaultValue
 
   if (isFinite(options.startFrom)) {
@@ -248,7 +248,7 @@ function getStartFromOption(element, options) {
   }
 
   // can be overridden because local option is priority
-  let value = getAttribute(element, 'data-ln-start-from')
+  const value = getAttribute(element, 'data-ln-start-from')
   if (value !== null) {
     startFrom = toNumber(value, defaultValue)
   }
@@ -262,10 +262,10 @@ function getStartFromOption(element, options) {
  * @param {HTMLElement} element
  */
 function duplicateMultilineNodes(element) {
-  let nodes = element.childNodes
-  for (let node in nodes) {
-    if (nodes.hasOwnProperty(node)) {
-      let child = nodes[node]
+  const nodes = element.childNodes
+  for (const node in nodes) {
+    if (Object.hasOwn(nodes, node)) {
+      const child = nodes[node]
       if (getLinesCount(child.textContent) > 0) {
         if (child.childNodes.length > 0) {
           duplicateMultilineNodes(child)
@@ -282,14 +282,15 @@ function duplicateMultilineNodes(element) {
  * @param {HTMLElement} element
  */
 function duplicateMultilineNode(element) {
-  let className = element.className
+  const className = element.className
 
   if (!/hljs-/.test(className)) return
 
-  let lines = getLines(element.innerHTML)
+  const lines = getLines(element.innerHTML)
+  let result = ''
 
-  for (let i = 0, result = ''; i < lines.length; i++) {
-    let lineText = lines[i].length > 0 ? lines[i] : ' '
+  for (let i = 0; i < lines.length; i++) {
+    const lineText = lines[i].length > 0 ? lines[i] : ' '
     result += format('<span class="{0}">{1}</span>\n', [className, lineText])
   }
 
@@ -336,7 +337,7 @@ function getAttribute(element, attrName) {
  */
 function toNumber(str, fallback) {
   if (!str) return fallback
-  let number = Number(str)
+  const number = Number(str)
   return isFinite(number) ? number : fallback
 }
 

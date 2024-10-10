@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import 'regenerator-runtime/runtime'
 // @ts-expect-error
 import Ws from '@adonisjs/websocket-client'

@@ -7,7 +7,7 @@ import { createActor } from '@/../declarations/oracles_backend'
 import { _SERVICE, OracleDto, UserDto } from '@/../declarations/oracles_backend/oracles_backend.did'
 
 // Refer to documentation: https://agent-js.icp.xyz/
-export const useIcpClientStore = defineStore('icpClientStore', () => {
+export const useIcpStore = defineStore('icpStore', () => {
   let authClient: AuthClient | undefined // can't be stored in ref...
   const authenticated = ref(false)
   const identity = ref<Identity>()

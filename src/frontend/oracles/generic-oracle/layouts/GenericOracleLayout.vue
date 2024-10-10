@@ -10,12 +10,8 @@
         :grouping="true"
         @select="onSelectOracle"
       />
-      <generic-oracle-create-view
-        class="un-inner-right"
-        v-if="currentView === 'create'"
-        @submit="onCreateOrUpdateOracle"
-      />
-      <generic-oracle-topics-view
+      <oracle-create-view class="un-inner-right" v-if="currentView === 'create'" @submit="onCreateOrUpdateOracle" />
+      <oracle-topics-view
         class="un-inner-right"
         v-else-if="currentView === 'oracle'"
         :oracleId="currentOracleId"
@@ -34,18 +30,18 @@
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { OraclePublication, OracleSettings } from '@/types/oracle'
-import { useIcpClientStore } from '@/store/IcpClient'
+import { useIcpStore } from '@/stores/IcpStore'
 import OracleMenu, { OracleMenuItem } from '@/components/oracle/OracleMenu.vue'
-import GenericOracleCreateView from '@/views/oracle/GenericOracleCreateView.vue'
-import GenericOracleTopicsView from '@/views/oracle/GenericOracleTopicsView.vue'
-import OraclePublishView from '@/views/oracle/OraclePublishView.vue'
+import OracleCreateView from '@/oracles/generic-oracle/views/OracleCreateView.vue'
+import OracleTopicsView from '@/views/OracleTopicsView.vue'
+import OraclePublishView from '@/views/OraclePublishView.vue'
 import { convertPublishPayloadByType } from '@/utils/msgDecoder'
 import { OracleTemplateType } from '@/types/oracle'
 
 type SelectedView = 'create' | 'oracle' | 'publish' | undefined
 const createId = -1n
 
-const icpClient = useIcpClientStore()
+const icpClient = useIcpStore()
 const loading = ref(true)
 const currentView = ref<SelectedView>(undefined)
 const currentOracleId = ref<bigint>(createId)
