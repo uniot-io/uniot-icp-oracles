@@ -32,6 +32,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import { OraclePublication, OracleSettings } from '@/types/oracle'
 import { useIcpClientStore } from '@/store/IcpClient'
 import OracleMenu, { OracleMenuItem } from '@/components/oracle/OracleMenu.vue'
@@ -99,15 +100,26 @@ async function onPublishMessage() {
 
 async function onPublish(data: OraclePublication) {
   loading.value = true
-  const convertion = convertPublishPayloadByType(data.message, data.msgType)
-  console.log('Publish via oracle:', convertion)
-  await icpClient.actor?.publish(currentOracleId.value, [{
-    topic: data.topic,
-    msg: new Uint8Array(convertion.payload),
-    msgType: convertion.type,
-    signed: data.signed,
-  }])
-  loading.value = false
-  currentView.value = 'oracle'
+  try {
+    const convertion = convertPublishPayloadByType(data.message, data.msgType)
+    const res = await icpClient.actor?.publish(currentOracleId.value, [
+      {
+        topic: data.topic,
+        msg: new Uint8Array(convertion.payload),
+        msgType: convertion.type,
+        signed: data.signed
+      }
+    ])
+    if (res![0]) {
+      ElMessage.success('Message successfully published')
+    } else {
+      ElMessage.error('The message was not published')
+    }
+  } catch (error) {
+    console.warn(error)
+  } finally {
+    loading.value = false
+    currentView.value = 'oracle'
+  }
 }
 </script>

@@ -66,7 +66,7 @@ const codeValid = ref(true)
 
 const editorLanguage = computed(() => {
   const msgType = form.msgType.toLocaleLowerCase()
-  if (['json', 'cbor'].includes(msgType)) return 'json'
+  if (['json', 'cbor', 'cose'].includes(msgType)) return 'json'
   return 'plaintext'
 })
 

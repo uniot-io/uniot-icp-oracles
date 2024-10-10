@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "outDir": "./dist",
     "target": "esnext",
     "module": "esnext",
     "moduleResolution": "node",
@@ -8,7 +9,7 @@
     "sourceMap": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "lib": ["esnext", "dom"],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "types": ["vite/client", "element-plus/global"],
     "paths": {
       "@/*": ["src/frontend/*"]
@@ -18,5 +19,6 @@
     "allowJs": true,
     "isolatedModules": true
   },
-  "include": ["src/frontend/**/*.ts", "src/frontend/**/*.d.ts", "src/frontend/**/*.tsx", "src/frontend/**/*.vue"]
+  "include": ["src/frontend/**/*.ts", "src/frontend/**/*.d.ts", "src/frontend/**/*.tsx", "src/frontend/**/*.vue"],
+  "exclude": ["./dist/**/*", "./src/frontend/plugins/*"]
 }
