@@ -30,18 +30,18 @@
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { OraclePublication, OracleSettings } from '@/types/oracle'
-import { useIcpClientStore } from '@/store/IcpClient'
+import { useIcpStore } from '@/stores/IcpStore'
 import OracleMenu, { OracleMenuItem } from '@/components/oracle/OracleMenu.vue'
-import OracleCreateView from '@/views/oracle/generic/OracleCreateView.vue'
-import OracleTopicsView from '@/views/oracle/common/OracleTopicsView.vue'
-import OraclePublishView from '@/views/oracle/common/OraclePublishView.vue'
+import OracleCreateView from '@/oracles/generic-oracle/views/OracleCreateView.vue'
+import OracleTopicsView from '@/views/OracleTopicsView.vue'
+import OraclePublishView from '@/views/OraclePublishView.vue'
 import { convertPublishPayloadByType } from '@/utils/msgDecoder'
 import { OracleTemplateType } from '@/types/oracle'
 
 type SelectedView = 'create' | 'oracle' | 'publish' | undefined
 const createId = -1n
 
-const icpClient = useIcpClientStore()
+const icpClient = useIcpStore()
 const loading = ref(true)
 const currentView = ref<SelectedView>(undefined)
 const currentOracleId = ref<bigint>(createId)

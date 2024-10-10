@@ -31,10 +31,11 @@
 <script setup lang="ts">
 import { ref, onMounted, markRaw, nextTick, onBeforeUnmount, computed, watchEffect } from 'vue'
 import * as CBOR from 'cbor-web'
-import { useMqttStore } from '@/store/MqttStore'
-import { initLineNumbersOnLoad } from '@/utils/highlightjs-line-numbers'
-import { PREDEFINED_LIBRARY } from '@/utils/lisp/library'
-import { lispExecute, lispTerminate, lispMinimalHandler } from '@/utils/lisp'
+import { useMqttStore } from '@/stores/MqttStore'
+import { useUniotStore } from '@/oracles/uniot-device/stores/UniotStore'
+import { initLineNumbersOnLoad } from '@/oracles/uniot-device/utils/highlightjs'
+import { PREDEFINED_LIBRARY } from '@/oracles/uniot-device/utils/lisp/library'
+import { lispExecute, lispTerminate, lispMinimalHandler } from '@/oracles/uniot-device/utils/lisp'
 import { groupEventTopic as getGroupEventTopic, defaultDomain } from '@/utils/mqttTopics'
 import { decodeIntoJSON } from '@/utils/msgDecoder'
 import ControlsContainer from './controls/Container.vue'
@@ -43,7 +44,7 @@ import AWrite from './controls/AnalogWrite.vue'
 import DRead from './controls/DigitalRead.vue'
 import DWrite from './controls/DigitalWrite.vue'
 import BClicked from './controls/ButtonClicked.vue'
-import { UniotDevicePrimitives } from '@/types/uniot'
+import { UniotDevicePrimitives } from '@/oracles/uniot-device/types'
 import { MqttMessageUniotDeviceEvent, MqttMessageTypes } from '@/types/mqtt'
 import type {
   ControlEmitData,
@@ -53,7 +54,6 @@ import type {
   EmulatorStateType,
   EmulatorDataType
 } from './types'
-import { useUniotStore } from '@/store/UniotStore'
 
 const AnalogRead = markRaw(ARead)
 const AnalogWrite = markRaw(AWrite)

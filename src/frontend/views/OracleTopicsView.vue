@@ -124,8 +124,8 @@ import { Buffer } from 'buffer'
 import { IPublishPacket } from 'mqtt-packet'
 import { MqttMessageSecurity, MqttMessageStatus, MqttMessageOrigin, MqttMessageType } from '@/types/mqtt'
 import { OracleTemplateType } from '@/types/oracle'
-import { useIcpClientStore } from '@/store/IcpClient'
-import { useMqttStore } from '@/store/MqttStore'
+import { useIcpStore } from '@/stores/IcpStore'
+import { useMqttStore } from '@/stores/MqttStore'
 import { OracleDto, SubscriptionDto } from '@/../declarations/oracles_backend/oracles_backend.did'
 import { decodeIntoString } from '@/utils/msgDecoder'
 
@@ -176,7 +176,7 @@ type MessagesSource = 'received' | 'published'
 
 const emit = defineEmits<GenericOracleTopicsEmits>()
 const props = defineProps<GenericOracleTopicsViewProps>()
-const icpClient = useIcpClientStore()
+const icpClient = useIcpStore()
 const mqttClient = useMqttStore()
 const loading = ref(true)
 const oracle = ref<OracleDto>()

@@ -35,7 +35,7 @@
     </template>
     <el-row>
       <el-col :span="12">
-        <emulator-view
+        <uniot-emulator-view
           v-if="!loading"
           v-model:emulation="emulation"
           v-model:log="log"
@@ -62,17 +62,17 @@
 import { watch, ref, onUnmounted, computed, onMounted, nextTick } from 'vue'
 import { CirclePlus, CaretRight, RemoveFilled } from '@element-plus/icons-vue'
 import { IPublishPacket } from 'mqtt-packet'
-import { useIcpClientStore } from '@/store/IcpClient'
-import { useMqttStore } from '@/store/MqttStore'
-import { useUniotStore } from '@/store/UniotStore'
+import { useIcpStore } from '@/stores/IcpStore'
+import { useMqttStore } from '@/stores/MqttStore'
+import { useUniotStore } from '@/oracles/uniot-device/stores/UniotStore'
 import { deviceScriptTopic, defaultDomain, deviceStatusTopic } from '@/utils/mqttTopics'
-import { beautify } from '@/utils/lisp/format'
+import { beautify } from '@/oracles/uniot-device/utils/lisp/format'
 import { decodeIntoJSON, decodeIntoString } from '@/utils/msgDecoder'
-import { UniotDevice, UniotGenericDevicePrimitives } from '@/types/uniot'
+import { UniotDevice, UniotGenericDevicePrimitives } from '@/oracles/uniot-device/types'
 import { OracleTemplate } from '@/types/oracle'
 import { MqttMessageTypes, MqttMessageUniotDeviceScript, MqttMessageUniotDeviceStatus } from '@/types/mqtt'
-import { initLineNumbersOnLoad } from '@/utils/highlightjs-line-numbers'
-import EmulatorView from '@/components/emulator/EmulatorView.vue'
+import { initLineNumbersOnLoad } from '@/oracles/uniot-device/utils/highlightjs'
+import UniotEmulatorView from '@/oracles/uniot-device/components/emulator/UniotEmulatorView.vue'
 
 interface UniotOracleDeviceViewProps {
   deviceId: bigint
@@ -87,7 +87,7 @@ type UniotDeviceEmits = {
 const props = defineProps<UniotOracleDeviceViewProps>()
 const emit = defineEmits<UniotDeviceEmits>()
 
-const icpClient = useIcpClientStore()
+const icpClient = useIcpStore()
 const mqttClient = useMqttStore()
 const uniotClient = useUniotStore()
 const loading = ref(false)

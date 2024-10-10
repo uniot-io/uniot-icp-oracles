@@ -12,7 +12,7 @@
       style="padding-top: 10px"
     />
     <template v-if="isCurrentOracleExisted">
-      <generic-oracle-topics-view
+      <oracle-topics-view
         v-if="selectedView === oracleViews[0]"
         :oracleId="currentOracleId"
         oracle-template="uniot_device"
@@ -49,20 +49,20 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, computed } from 'vue'
 import { IPublishPacket } from 'mqtt-packet'
-import { useIcpClientStore } from '@/store/IcpClient'
-import { useMqttStore } from '@/store/MqttStore'
-import { useUniotStore } from '@/store/UniotStore'
+import { useIcpStore } from '@/stores/IcpStore'
+import { useMqttStore } from '@/stores/MqttStore'
+import { useUniotStore } from '@/oracles/uniot-device/stores/UniotStore'
 import { deviceStatusTopic, defaultDomain, parseDeviceTopic } from '@/utils/mqttTopics'
 import OracleMenu, { OracleMenuItem } from '@/components/oracle/OracleMenu.vue'
-import UniotOracleDeviceView from '@/views/oracle/uniot/OracleDeviceView.vue'
-import GenericOracleTopicsView from '@/views/oracle/common/OracleTopicsView.vue'
-import { UniotDevice, UniotDeviceData } from '@/types/uniot'
+import UniotOracleDeviceView from '@/oracles/uniot-device/views/OracleDeviceView.vue'
+import OracleTopicsView from '@/views/OracleTopicsView.vue'
+import { UniotDevice, UniotDeviceData } from '@/oracles/uniot-device/types'
 import { OracleTemplate } from '@/types/oracle'
 import { decodeIntoJSON } from '@/utils/msgDecoder'
 import { MqttMessageUniotDeviceStatus, MqttMessageTypes } from '@/types/mqtt'
 
 const ZERO_ORACLE_ID = -1n
-const icpClient = useIcpClientStore()
+const icpClient = useIcpStore()
 const mqttClient = useMqttStore()
 const uniotClient = useUniotStore()
 
@@ -119,7 +119,6 @@ async function loadUserOracles() {
 }
 
 async function subscribeDeviceTopic() {
-  console.log(deviceStatusWildTopic.value)
   try {
     await mqttClient.subscribe(deviceStatusWildTopic.value, onDeviceMessage)
   } catch (error) {

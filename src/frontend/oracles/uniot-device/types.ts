@@ -1,4 +1,4 @@
-import { MqttMessageUniotDeviceRawData } from './mqtt'
+import { MqttMessageUniotDeviceRawData } from '@/types/mqtt'
 
 export interface UniotDeviceRawData {
   connection_id: number

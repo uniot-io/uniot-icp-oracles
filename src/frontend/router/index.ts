@@ -1,17 +1,7 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
-import { useIcpClientStore } from '@/store/IcpClient'
-import MainLayout from '@/layouts/MainLayout.vue'
-import GenericOracleLayout from '@/layouts/oracles/GenericOracleLayout.vue'
-import UniotOracleLayout from '@/layouts/oracles/UniotOracleLayout.vue'
-import CustomOracleLayout from '@/layouts/oracles/CustomOracleLayout.vue'
-import LoginView from '@/views/LoginView.vue'
-import NotFoundView from '@/views/NotFoundView.vue'
-
-// legacy views
-import LegacyLayout from '@/layouts/LegacyLayout.vue'
-import LegacyIndexView from '@/views/legacy/LegacyIndexView.vue'
-import LegacyAboutView from '@/views/legacy/LegacyAboutView.vue'
-import LegacyExampleView from '@/views/legacy/LegacyExampleView.vue'
+import { useIcpStore } from '@/stores/IcpStore'
+import { MainLayout, CustomOracleLayout, GenericOracleLayout, UniotOracleLayout } from '@/layouts'
+import { NotFoundView, LoginView } from '@/views'
 
 // NOTE: Avoid using dynamic imports (e.g., `component: async () => await import('@/views/Example.vue')`) in this application.
 // The local development setup with the Internet Computer canister expects either a `canisterId` parameter in request URLs
@@ -23,11 +13,11 @@ const routes: RouteRecordRaw[] = [
     redirect: 'generic-oracle',
     children: [
       { path: 'generic-oracle', component: GenericOracleLayout },
-      { path: 'uniot-oracle', component: UniotOracleLayout },
-      { path: 'custom-oracle', component: CustomOracleLayout }
+      { path: 'custom-oracle', component: CustomOracleLayout },
+      { path: 'uniot-oracle', component: UniotOracleLayout }
     ],
     beforeEnter: () => {
-      if (!useIcpClientStore().isAuthenticated) {
+      if (!useIcpStore().isAuthenticated) {
         return 'login'
       }
     }
@@ -35,15 +25,6 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/login',
     component: LoginView
-  },
-  {
-    path: '/legacy',
-    component: LegacyLayout,
-    children: [
-      { path: '', component: LegacyIndexView },
-      { path: 'about', component: LegacyAboutView },
-      { path: 'example', component: LegacyExampleView }
-    ]
   },
   {
     path: '/:catchAll(.*)*',

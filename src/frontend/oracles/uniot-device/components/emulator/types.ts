@@ -1,5 +1,5 @@
 import type { Component } from 'vue'
-import { UniotDevice, UniotDevicePrimitives } from '@/types/uniot'
+import { UniotDevice, UniotDevicePrimitives } from '@/oracles/uniot-device/types'
 
 export type ControlEmitData = {
   value: number
